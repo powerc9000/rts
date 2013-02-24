@@ -9,6 +9,26 @@
 (function(window, undefined){
     "use strict";
     var headOn = (function(){
+        function relMouseCoords(event){
+            var totalOffsetX = 0;
+            var totalOffsetY = 0;
+            var canvasX = 0;
+            var canvasY = 0;
+            var currentElement = this;
+            console.log(arguments)
+            do{
+                totalOffsetX += currentElement.offsetLeft - currentElement.scrollLeft;
+                totalOffsetY += currentElement.offsetTop - currentElement.scrollTop;
+            }
+            while(currentElement = currentElement.offsetParent)
+            canvasX = event.pageX - totalOffsetX;
+            canvasY = event.pageY - totalOffsetY;
+            return {x:canvasX, y:canvasY}
+        }
+        var canvasOnClick = function(e){
+            var coords = relMouseCoords.call(this, e);
+            headOn.events.trigger("mouseClick", coords);
+        }
         var headOn = {
 
                 groups: {},
@@ -19,6 +39,37 @@
 
                 randInt: function(min, max) {
                     return Math.floor(Math.random() * (max + 1 - min)) + min;
+                },
+                vector: function(x,y){
+                    if(this == headOn){
+                        return new headOn.vector(x,y);
+                    }
+                    var v = [x,y]
+                    return{
+                        add:function(vector){
+                            return [vector[0]+v[0], vector[1]+v[1]]
+                        },
+                        sub: function(vector){
+                            return [vector[0]-v[0], vector[1]-v[1]]
+                        },
+                        multiply:function(scalar){
+                            return [v[0]*scalar, v[1]*scalar];
+                        },
+                        cross: function(vector){
+
+                        },
+                        dot:function(vector){
+
+                        },
+                        value:function(){
+                            return v;
+                        }, 
+                        normalize: function(){
+                            var abs = Math.sqrt((v[0]*v[0]) + (v[1] * v[1]))
+                            return [v[0]/abs, v[1]/abs];
+                        }
+
+                    }
                 },
 
                 events: {
@@ -38,7 +89,7 @@
                         if(e){
                             l = e.length;
                             for(i = 0; i < l; i++){
-                                e[i].call(headOn, args);
+                                e[i].apply(headOn, args);
                             }
                         }
                         
@@ -186,17 +237,16 @@
                         img.src = image.src;
                         img.onload = function(){
                             loaded += 1;
+                            checkAllLoaded(loaded, total, that);
                         };
                     
                         that.images[image.name] = img;
                     });
-                    
-                    interval = setInterval(function(){
+                    var checkAllLoaded = function(loaded, total, that){
                         if(total === loaded){
                             that.imagesLoaded = true;
-                            clearInterval(interval);
                         }
-                    }, 100);
+                    }
                 },
 
                 onTick: function(then){
@@ -227,16 +277,20 @@
                     }, 1000/this.fps);
                 }
         };
+        
         headOn.canvas.create = function(name,width,height){
             var canvas, ctx;
             canvas = document.createElement("canvas");
             canvas.width = width;
             canvas.height = height;
+            canvas.onclick = canvasOnClick;
             ctx = canvas.getContext("2d");
             this.prototype.canvases[name] = {
                 canvas: canvas,
-                ctx: ctx
+                ctx: ctx,
+                name: name
             };
+           
         }
         headOn.canvas.prototype = {
             canvases: {},

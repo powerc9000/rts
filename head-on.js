@@ -9,6 +9,7 @@
 (function(window, undefined){
     "use strict";
     var headOn = (function(){
+        var headOn;
         function relMouseCoords(event){
             var totalOffsetX = 0;
             var totalOffsetY = 0;
@@ -25,11 +26,25 @@
             canvasY = event.pageY - totalOffsetY;
             return {x:canvasX, y:canvasY}
         }
-        var canvasOnClick = function(e){
+        var canvasMouseDown = function(e){
             var coords = relMouseCoords.call(this, e);
-            headOn.events.trigger("mouseClick", coords);
+            headOn.events.trigger("mouseDown", coords);
+            headOn.mouseDown = true;
         }
-        var headOn = {
+        
+        var canvasMouseUp = function(e){
+            var coords = relMouseCoords.call(this, e);
+            headOn.events.trigger("mouseUp", coords);
+            headOn.mouseDown = false;
+        }
+        var canvasMouseMove = function(e){
+            var coords = relMouseCoords.call(this, e);
+            if(headOn.mouseDown){
+                headOn.events.trigger("drag", coords);
+            }
+            headOn.events.trigger("mouseMove", coords);
+        }
+        headOn = {
 
                 groups: {},
                 images: {},
@@ -96,7 +111,7 @@
                     }
                 },
 
-                drawRect: function(width,height,x,y,color){
+                drawRect: function(width,height,x,y,color, strokeWidth, strokeColor){
                     this.ctx.save();
                     if(color){
                         this.ctx.fillStyle = color;
@@ -104,7 +119,13 @@
                     this.ctx.fillRect(x,y,width,height);
                     this.ctx.restore();
                 },
-
+                strokeRect: function(width, heigh, x,y, lineWidth, color){
+                    this.ctx.save();
+                    this.ctx.strokeStyle = color;
+                    this.ctx.lineWidth = lineWidth;
+                    this.ctx.strokeRect(x,y, width, height);
+                    this.ctx.restore();
+                },
                 drawImage: function(image,x,y){
                     this.ctx.drawImage(image,x,y);
                 },
@@ -283,7 +304,10 @@
             canvas = document.createElement("canvas");
             canvas.width = width;
             canvas.height = height;
-            canvas.onclick = canvasOnClick;
+            //canvas.onclick = canvasOnClick;
+            canvas.onmousedown = canvasMouseDown;
+            canvas.onmouseup = canvasMouseUp;
+            canvas.onmousemove = canvasMouseMove;
             ctx = canvas.getContext("2d");
             this.prototype.canvases[name] = {
                 canvas: canvas,
@@ -341,6 +365,14 @@
 
                 ctx.restore();
                 return this;
+            },
+            strokeRect: function(width, height, x,y, lineWidth, color){
+                var ctx = this.canvas.ctx;
+                ctx.save();
+                ctx.strokeStyle = color;
+                ctx.lineWidth = lineWidth;
+                ctx.strokeRect(x,y, width, height);
+                ctx.restore();
             },
 
             append: function(element){

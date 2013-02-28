@@ -16,7 +16,6 @@
             var canvasX = 0;
             var canvasY = 0;
             var currentElement = this;
-            console.log(arguments)
             do{
                 totalOffsetX += currentElement.offsetLeft - currentElement.scrollLeft;
                 totalOffsetY += currentElement.offsetTop - currentElement.scrollTop;
@@ -28,21 +27,29 @@
         }
         var canvasMouseDown = function(e){
             var coords = relMouseCoords.call(this, e);
-            headOn.events.trigger("mouseDown", coords);
+            var eventName;
+            if(e.button === 0){
+                eventName = "leftMouseDown";
+            }
+            else if(e.button === 2){
+                eventName = "rightMouseDown";
+            }
+            headOn.events.trigger(eventName, coords, e.button);
             headOn.mouseDown = true;
+            return false;
         }
         
         var canvasMouseUp = function(e){
             var coords = relMouseCoords.call(this, e);
-            headOn.events.trigger("mouseUp", coords);
+            headOn.events.trigger("mouseUp", coords, e.button);
             headOn.mouseDown = false;
         }
         var canvasMouseMove = function(e){
             var coords = relMouseCoords.call(this, e);
             if(headOn.mouseDown){
-                headOn.events.trigger("drag", coords);
+                headOn.events.trigger("drag", coords, e.button);
             }
-            headOn.events.trigger("mouseMove", coords);
+            headOn.events.trigger("mouseMove", coords, e.button);
         }
         headOn = {
 
@@ -308,6 +315,7 @@
             canvas.onmousedown = canvasMouseDown;
             canvas.onmouseup = canvasMouseUp;
             canvas.onmousemove = canvasMouseMove;
+            canvas.oncontextmenu = function(){return false;}
             ctx = canvas.getContext("2d");
             this.prototype.canvases[name] = {
                 canvas: canvas,

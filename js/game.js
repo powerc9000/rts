@@ -1,43 +1,16 @@
-var $h = headOn;
-$h.canvas.create("main", 500, 500);
+var $h = require("./head-on");
+var Entity = require("./entity");
+var camera = new $h.Camera(500, 500);
+$h.canvas.create("main", 500, 500, camera);
 $h.canvas("main").append("body");
 var startPoint = {};
 var box = {};
 var draging;
-var dude = {
-	x:10,
-	y:10,
-	width:20,
-	height:20,
-	color:"blue",
-	target:{
-		x:0,
-		y:0
-	},
-	moving: false
-};
-var dude2 ={
-	x:40,
-	y:40,
-	width:20,
-	height:20,
-	color:"green",
-	target:{
-		x:0,
-		y:0
-	},
-}
-var dude3 = {
-	x:70,
-	y:90,
-	width:20,
-	height:20,
-	color:"red",
-	target:{
-		x:0,
-		y:0
-	},
-}
+
+var dude = new Entity(10,10, 20, 20, "blue");
+var dude2 = new Entity(40, 40, 20, 20, "green");
+var dude3 = new Entity(70, 90, 20, 20, "red");
+
 var entities = [dude, dude2, dude3];
 var selectedEntities = [];
 $h.events.listen("rightMouseDown", function(coords, button){
@@ -78,7 +51,7 @@ $h.events.listen("drag", function(coords){
 	}
 	
 });
-$h.update = function(){
+$h.update(function(){
 	
 	selectedEntities.forEach(function(dude){
 		var current = $h.vector(dude.x, dude.y);
@@ -103,47 +76,33 @@ $h.update = function(){
 				var old = {
 					x: dude.x,
 					y: dude.y
-				}
+				};
 				coords = $h.vector.apply(null, $h.vector.apply(null,current.sub(coords.value())).normalize())
 				coords = $h.vector.apply(null, coords.multiply(3))
 				current = current.add(coords.value());
 				
 				dude.x = current[0];
 				dude.y = current[1];
-				// if(colliding){
-				// 	if($h.randInt(0, 1)){
-				// 		dude.x = old.x - $h.randInt(1,2);
-				// 		dude.y = old.y - $h.randInt(1,2);
-				// 	}
-				// 	else{
-				// 		dude.x = old.x + $h.randInt(1,2);
-				// 		dude.y = old.y + $h.randInt(1,2);
-				// 	}
-				// }
+		
 
 			}
-			
 		}
-	})
-	
-	
-
-}
-$h.render = function(){
+	});
+});
+$h.render(function(){
 	var c = $h.canvas("main");
 	c.drawRect(500, 500, 0, 0, "white");
-	c.drawRect(dude.width, dude.height, dude.x, dude.y, dude.color);
 	entities.forEach(function(dude){
-		c.drawRect(dude.width, dude.height, dude.x, dude.y, dude.color);
-	})
+		dude.render(c);
+	});
 	if(draging){
-		c.drawRect(box.width, box.height, box.x, box.y, "rgba(0,128, 0, .2)")
+		c.drawRect(box.width, box.height, box.x, box.y, "rgba(0,128, 0, .2)");
 		c.strokeRect(box.width, box.height, box.x, box.y, 2, "green");
 	}
 	
 
-}
-$h.loadImages();
+});
+//$h.loadImages();
 $h.run();
 
 
@@ -174,18 +133,18 @@ function normalizeBox(box){
 
 function clone(obj) {
     // Handle the 3 simple types, and null or undefined
-    if (null == obj || "object" != typeof obj) return obj;
-
+    if (null === obj || "object" != typeof obj) return obj;
+    var copy;
     // Handle Date
     if (obj instanceof Date) {
-        var copy = new Date();
+        copy = new Date();
         copy.setTime(obj.getTime());
         return copy;
     }
 
     // Handle Array
     if (obj instanceof Array) {
-        var copy = [];
+        copy = [];
         for (var i = 0, len = obj.length; i < len; i++) {
             copy[i] = clone(obj[i]);
         }
@@ -194,7 +153,7 @@ function clone(obj) {
 
     // Handle Object
     if (obj instanceof Object) {
-        var copy = {};
+        copy = {};
         for (var attr in obj) {
             if (obj.hasOwnProperty(attr)) copy[attr] = clone(obj[attr]);
         }

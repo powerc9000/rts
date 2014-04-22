@@ -2,6 +2,7 @@
 var $h = require("./head-on");
 
 module.exports = (function(){
+  "use strict";
    function Entity(x, y, width, height, color){
     this.position = $h.Vector(x||0, y||0);
     this.width = width;
@@ -18,10 +19,95 @@ module.exports = (function(){
     speed:0,
     a:0,
     target: $h.Vector(0,0),
-    v: $h.Vector(0,0),
-    update:function(){},
+    velocity: $h.Vector(0,0),
+    selected:false,
+    update:function(delta){
+      if(!this.isLeader && this.leader){
+        this.followLeader(this.leader);
+      }else if(this.isLeader){
+        this.arrive(this.target, 50);
+      }
+    },
     render:function(canvas){
-      canvas.drawRect(this.width, this.height, this.position.x, this.position.y, this.color);
+      var stroke = {};
+      if(this.selected){
+        stroke = {color:"black", width:2};
+      }
+      canvas.drawRect(this.width, this.height, this.position.x, this.position.y, this.color, stroke);
+    },
+    followLeader: function(leader){
+      var tv = leader.velocity;
+      var force = $h.Vector(0,0);
+   
+      // Calculate the ahead point
+      tv.normalize();
+      tv.mul(50);
+      var ahead = leader.position.add(tv);
+   
+      // Calculate the behind point
+      tv.mul(-1);
+      var behind = leader.position.add(tv);
+   
+      // If the character is on the leader's sight, add a force
+      // to evade the route immediately.
+      // if (isOnLeaderSight(leader, ahead)) {
+      //     force = force.add(this.evade(leader));
+      // }
+   
+      // Creates a force to arrive at the behind point
+      force = force.add(this.arrive(behind, 50)); // 50 is the arrive radius
+   
+      // Add separation force
+      force = force.add(this.separation());
+   
+      return force;
+    },
+    arrive: function(target, radius){
+      var desired_velocity = this.position.sub(target).normalize();
+      var distance = desired_velocity.length();
+       
+      // Check the distance to detect whether the character
+      // is inside the slowing area
+      if (distance < radius) {
+          // Inside the slowing area
+          desired_velocity = desired_velocity.normalize().mul(this.max_velocity).mul(distance/radius);
+      } else {
+          // Outside the slowing area.
+          desired_velocity = desired_velocity.normalize().mul(this.max_velocity);
+      }
+       
+      // Set the steering based on this
+      return desired_velocity.sub(this.velocity);
+    },
+
+    separation: function(){
+      var force = $h.Vector(0,0);
+      var neighborCount = 0;
+      for (var i = 0; i < $h.gamestate.units.length; i++) {
+          var b = $h.gamestate.units[i];
+   
+          if (b != this && this.position.sub(b.position).length() <= 10) {
+              force.x += b.position.x - this.position.x;
+              force.y += b.position.y - this.position.y;
+              neighborCount++;
+          }
+      }
+   
+      if (neighborCount !== 0) {
+          force.x /= neighborCount;
+          force.y /= neighborCount;
+   
+          force.mul( -1);
+      }
+   
+      force.normalize();
+      force.mul(10);
+   
+      return force;
+    },
+
+    setLeader: function(leader){
+      this.leader = leader;
     }
    };
 
@@ -31,6 +117,7 @@ module.exports = (function(){
 },{"./head-on":3}],2:[function(require,module,exports){
 var $h = require("./head-on");
 var Entity = require("./entity");
+var mouse = require("./mouse");
 var camera = new $h.Camera(500, 500);
 $h.canvas.create("main", 500, 500, camera);
 $h.canvas("main").append("body");
@@ -44,26 +131,43 @@ var dude3 = new Entity(70, 90, 20, 20, "red");
 
 var entities = [dude, dude2, dude3];
 var selectedEntities = [];
-$h.events.listen("rightMouseDown", function(coords, button){
+var canvasMouse = mouse($h.canvas("main").canvas.canvas);
+$h.gamestate = {units:entities};
+canvasMouse.listen("rightMouseDown", function(coords, button){
+  var leader = $h.randInt(0, selectedEntities.length-1);
+  leader = selectedEntities[leader];
 	selectedEntities.forEach(function(dude){
-		dude.target = coords;
-		dude.moving = true;
-	})
+    if(dude === leader){
+      dude.isLeader = true;
+      dude.target = coords;
+    }else{
+      dude.setLeader(leader);
+    }
+		
+	});
 	
 });
-$h.events.listen("leftMouseDown", function(coords, button){
+canvasMouse.listen("leftMouseDown", function(coords, button){
 	startPoint = coords;
 	draging = true;
-})
-$h.events.listen("mouseUp", function(coords, button){
-	if(button == 0){
+});
+canvasMouse.listen("mouseUp", function(coords, button){
+	if(button === 1){
 		selectEntitiesInSelection(box);
+    if(!selectedEntities.length){
+      entities.forEach(function(dude){
+        if($h.collides(dude, {position:$h.Vector(coords.x, coords.y), width:1, height:1, angle:0})){
+          dude.selected = true;
+          selectedEntities.push(dude);
+        }
+      });
+    }
 	}
 	draging = false;
 	startPoint = {};
 	box = {};
-})
-$h.events.listen("drag", function(coords){
+});
+canvasMouse.listen("drag", function(coords){
 	box.x = startPoint.x;
 	box.y = startPoint.y;
 	if(coords.x > startPoint.x){
@@ -82,43 +186,11 @@ $h.events.listen("drag", function(coords){
 	}
 	
 });
-$h.update(function(){
+$h.update(function(delta){
+	entities.forEach(function(dude){
+    dude.update(delta);
+  });
 	
-	selectedEntities.forEach(function(dude){
-		var current = $h.vector(dude.x, dude.y);
-	var coords = $h.vector(dude.target.x, dude.target.y);
-		if((dude.x > dude.target.x - 5 && dude.x < dude.target.x +5) && (dude.y > dude.target.y - 5 && dude.y < dude.target.y + 2)){
-			dude.moving = false;
-		}
-		else{
-			var colliding = false;
-			selectedEntities.forEach(function(d){
-				if(d !== dude){
-					if($h.collides(dude, d)){
-						colliding = true;
-					}
-					if(!d.moving){
-						dude.target.x = d.x+20;
-						dude.target.y = d.y+20;
-					}
-				}
-			});
-			if(dude.moving){
-				var old = {
-					x: dude.x,
-					y: dude.y
-				};
-				coords = $h.vector.apply(null, $h.vector.apply(null,current.sub(coords.value())).normalize())
-				coords = $h.vector.apply(null, coords.multiply(3))
-				current = current.add(coords.value());
-				
-				dude.x = current[0];
-				dude.y = current[1];
-		
-
-			}
-		}
-	});
 });
 $h.render(function(){
 	var c = $h.canvas("main");
@@ -127,8 +199,7 @@ $h.render(function(){
 		dude.render(c);
 	});
 	if(draging){
-		c.drawRect(box.width, box.height, box.x, box.y, "rgba(0,128, 0, .2)");
-		c.strokeRect(box.width, box.height, box.x, box.y, 2, "green");
+		c.drawRect(box.width, box.height, box.x, box.y, "rgba(0,128, 0, .2)", {color:"green", width:2});
 	}
 	
 
@@ -139,14 +210,22 @@ $h.run();
 
 function selectEntitiesInSelection(box){
 	selectedEntities.length = 0;
-	console.log("hey!")
+  box = box || {};
 	box = normalizeBox(box);
+  if(Object.keys(box).length === 0){
+    entities.forEach(function(dude){
+      dude.selected = false;
+    });
+    return;
+  }
 	entities.forEach(function(dude){
-		if($h.collides(dude, box)){
+		if($h.collides(dude, {width:box.width, height:box.height, angle:0, position:$h.Vector(box.x, box.y)})){
 			selectedEntities.push(dude);
-		}
+      dude.selected = true;
+		}else{
+      dude.selected = false;
+    }
 	});
-	console.log(selectedEntities)
 }
 
 function normalizeBox(box){
@@ -193,7 +272,7 @@ function clone(obj) {
 
     throw new Error("Unable to copy obj! Its type isn't supported.");
 }
-},{"./entity":1,"./head-on":3}],3:[function(require,module,exports){
+},{"./entity":1,"./head-on":3,"./mouse":4}],3:[function(require,module,exports){
 //     __  __         __           _  
 //    / / / /__  ____ _____/ /  ____  ____         (_)____
 //   / /_/ / _ \/ __ `/ __  /_____/ __ \/ __ \    / / ___/
@@ -321,6 +400,37 @@ function clone(obj) {
               base[i] = values[i];
             }
           }
+        },
+        clone: function (obj) {
+          // Handle the 3 simple types, and null or undefined
+          if (null === obj || "object" != typeof obj) return obj;
+          var copy;
+          // Handle Date
+          if (obj instanceof Date) {
+              copy = new Date();
+              copy.setTime(obj.getTime());
+              return copy;
+          }
+
+          // Handle Array
+          if (obj instanceof Array) {
+              copy = [];
+              for (var i = 0, len = obj.length; i < len; i++) {
+                  copy[i] = clone(obj[i]);
+              }
+              return copy;
+          }
+
+          // Handle Object
+          if (obj instanceof Object) {
+              copy = {};
+              for (var attr in obj) {
+                  if (obj.hasOwnProperty(attr)) copy[attr] = clone(obj[attr]);
+              }
+              return copy;
+          }
+
+          throw new Error("Unable to copy obj! Its type isn't supported.");
         },
         collides: function(poly1, poly2) {
           var points1 = this.getPoints(poly1),
@@ -876,4 +986,73 @@ function clone(obj) {
   module.exports = headOn;
   window.headOn = headOn;
 })(window);
+},{}],4:[function(require,module,exports){
+//Setup event listeners for the mouse
+module.exports = function(obj){
+  "use strict";
+  var listeners = {};
+  obj = obj || window;
+  var dragging;
+
+  function getCoords(e){
+    try{
+       var bounds = obj.getBoundingClientRect();
+       return {x:e.pageX - bounds.left, y: e.pageY - bounds.top};
+     }catch(err){
+      return  {x:e.pageX, y: e.pageY};
+     }
+   
+    
+  }
+
+  obj.addEventListener("mousedown", function(e){
+    var button = e.which || e.button;
+    var coords = getCoords(e);
+    if(button === 1){
+      dragging = true;
+    }
+    if(listeners.mousedown){
+      listeners.mousedown.call(null, coords, button);
+    }
+    if(listeners.leftmousedown && button === 1){
+      listeners.leftmousedown.call(null, coords);
+    }
+  });
+  obj.addEventListener("contextmenu", function(e){
+    var coords = getCoords(e);
+    if(listeners.rightmousedown){
+      listeners.rightmousedown.call(null, coords);
+      e.preventDefault();
+    }
+  });
+  obj.addEventListener("mouseup", function(e){
+    var button = e.which || e.button;
+    var coords = getCoords(e);
+    if(button === 1){
+      dragging = false;
+    }
+    
+    if(listeners.mouseup){
+      listeners.mouseup.call(null, coords, button);
+    }
+  });
+  obj.addEventListener("mousemove", function(e){
+    var coords = getCoords(e);
+    if(listeners.mousemove){
+      listeners.mousemove.call(null, coords);
+    }
+    if(listeners.drag){
+      if(dragging){
+        listeners.drag.call(null, coords);
+      }
+    }
+  });
+  return{
+    listen:function(type, cb){
+      listeners[type.toLowerCase()] = cb;
+    }
+  };
+
+};
+
 },{}]},{},[2])

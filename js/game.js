@@ -1,5 +1,6 @@
 var $h = require("./head-on");
 var Entity = require("./entity");
+var mouse = require("./mouse");
 var camera = new $h.Camera(500, 500);
 $h.canvas.create("main", 500, 500, camera);
 $h.canvas("main").append("body");
@@ -13,26 +14,43 @@ var dude3 = new Entity(70, 90, 20, 20, "red");
 
 var entities = [dude, dude2, dude3];
 var selectedEntities = [];
-$h.events.listen("rightMouseDown", function(coords, button){
+var canvasMouse = mouse($h.canvas("main").canvas.canvas);
+$h.gamestate = {units:entities};
+canvasMouse.listen("rightMouseDown", function(coords, button){
+  var leader = $h.randInt(0, selectedEntities.length-1);
+  leader = selectedEntities[leader];
 	selectedEntities.forEach(function(dude){
-		dude.target = coords;
-		dude.moving = true;
-	})
+    if(dude === leader){
+      dude.isLeader = true;
+      dude.target = coords;
+    }else{
+      dude.setLeader(leader);
+    }
+		
+	});
 	
 });
-$h.events.listen("leftMouseDown", function(coords, button){
+canvasMouse.listen("leftMouseDown", function(coords, button){
 	startPoint = coords;
 	draging = true;
-})
-$h.events.listen("mouseUp", function(coords, button){
-	if(button == 0){
+});
+canvasMouse.listen("mouseUp", function(coords, button){
+	if(button === 1){
 		selectEntitiesInSelection(box);
+    if(!selectedEntities.length){
+      entities.forEach(function(dude){
+        if($h.collides(dude, {position:$h.Vector(coords.x, coords.y), width:1, height:1, angle:0})){
+          dude.selected = true;
+          selectedEntities.push(dude);
+        }
+      });
+    }
 	}
 	draging = false;
 	startPoint = {};
 	box = {};
-})
-$h.events.listen("drag", function(coords){
+});
+canvasMouse.listen("drag", function(coords){
 	box.x = startPoint.x;
 	box.y = startPoint.y;
 	if(coords.x > startPoint.x){
@@ -51,43 +69,11 @@ $h.events.listen("drag", function(coords){
 	}
 	
 });
-$h.update(function(){
+$h.update(function(delta){
+	entities.forEach(function(dude){
+    dude.update(delta);
+  });
 	
-	selectedEntities.forEach(function(dude){
-		var current = $h.vector(dude.x, dude.y);
-	var coords = $h.vector(dude.target.x, dude.target.y);
-		if((dude.x > dude.target.x - 5 && dude.x < dude.target.x +5) && (dude.y > dude.target.y - 5 && dude.y < dude.target.y + 2)){
-			dude.moving = false;
-		}
-		else{
-			var colliding = false;
-			selectedEntities.forEach(function(d){
-				if(d !== dude){
-					if($h.collides(dude, d)){
-						colliding = true;
-					}
-					if(!d.moving){
-						dude.target.x = d.x+20;
-						dude.target.y = d.y+20;
-					}
-				}
-			});
-			if(dude.moving){
-				var old = {
-					x: dude.x,
-					y: dude.y
-				};
-				coords = $h.vector.apply(null, $h.vector.apply(null,current.sub(coords.value())).normalize())
-				coords = $h.vector.apply(null, coords.multiply(3))
-				current = current.add(coords.value());
-				
-				dude.x = current[0];
-				dude.y = current[1];
-		
-
-			}
-		}
-	});
 });
 $h.render(function(){
 	var c = $h.canvas("main");
@@ -96,8 +82,7 @@ $h.render(function(){
 		dude.render(c);
 	});
 	if(draging){
-		c.drawRect(box.width, box.height, box.x, box.y, "rgba(0,128, 0, .2)");
-		c.strokeRect(box.width, box.height, box.x, box.y, 2, "green");
+		c.drawRect(box.width, box.height, box.x, box.y, "rgba(0,128, 0, .2)", {color:"green", width:2});
 	}
 	
 
@@ -108,14 +93,22 @@ $h.run();
 
 function selectEntitiesInSelection(box){
 	selectedEntities.length = 0;
-	console.log("hey!")
+  box = box || {};
 	box = normalizeBox(box);
+  if(Object.keys(box).length === 0){
+    entities.forEach(function(dude){
+      dude.selected = false;
+    });
+    return;
+  }
 	entities.forEach(function(dude){
-		if($h.collides(dude, box)){
+		if($h.collides(dude, {width:box.width, height:box.height, angle:0, position:$h.Vector(box.x, box.y)})){
 			selectedEntities.push(dude);
-		}
+      dude.selected = true;
+		}else{
+      dude.selected = false;
+    }
 	});
-	console.log(selectedEntities)
 }
 
 function normalizeBox(box){

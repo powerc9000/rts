@@ -29,7 +29,7 @@ module.exports = (function(){
         console.log("leader")
         this.velocity = this.velocity.add(this.arrive(this.target, 50));
       }
-      this.velocity = this.velocity.add(this.separation());
+      
       this.position = this.position.add(this.velocity.mul(delta/1000));
     },
     render:function(canvas){
@@ -97,7 +97,8 @@ module.exports = (function(){
       for (var i = 0; i < $h.gamestate.units.length; i++) {
           var b = $h.gamestate.units[i];
           if (b != this && this.position.sub(b.position).length() <= 30) {
-              force = b.position.sub(this.position);
+              force.x += b.position.x - this.position.x;
+              force.y += b.position.y - this.position.y;
               neighborCount++;
           }
       }
@@ -106,12 +107,11 @@ module.exports = (function(){
           force.x /= neighborCount;
           force.y /= neighborCount;
    
-          force.mul( -1);
+          force = force.mul( -1);
       }
    
-      force.normalize();
-      force.mul(20);
-   
+      force = force.normalize();
+      force = force.mul(20);
       return force;
     },
 

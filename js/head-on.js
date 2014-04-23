@@ -677,6 +677,9 @@
     headOn.Vector.prototype = {
       normalize: function(){
         var len = this.length();
+        if(len === 0){
+          return headOn.Vector(0,0);
+        }
         return headOn.Vector(this.x/len, this.y/len);
       },
 

@@ -18,19 +18,30 @@ module.exports = (function(){
     speed:0,
     a:0,
     target: $h.Vector(0,0),
-    velocity: $h.Vector(0,0),
     selected:false,
+    max_velocity:200,
+    velocity: $h.Vector(),
     update:function(delta){
+
       if(!this.isLeader && this.leader){
-        this.followLeader(this.leader);
+        this.velocity = this.velocity.add(this.followLeader(this.leader));
       }else if(this.isLeader){
-        this.arrive(this.target, 50);
+        console.log("leader")
+        this.velocity = this.velocity.add(this.arrive(this.target, 50));
       }
+      this.velocity = this.velocity.add(this.separation());
+      this.position = this.position.add(this.velocity.mul(delta/1000));
     },
     render:function(canvas){
       var stroke = {};
+      var color;
       if(this.selected){
-        stroke = {color:"black", width:2};
+        if(this.isLeader){
+          color = "yellow";
+        }else{
+          color = "black";
+        }
+        stroke = {color:color, width:20};
       }
       canvas.drawRect(this.width, this.height, this.position.x, this.position.y, this.color, stroke);
     },
@@ -39,12 +50,12 @@ module.exports = (function(){
       var force = $h.Vector(0,0);
    
       // Calculate the ahead point
-      tv.normalize();
-      tv.mul(50);
+      tv = tv.normalize();
+      tv = tv.mul(30);
       var ahead = leader.position.add(tv);
    
       // Calculate the behind point
-      tv.mul(-1);
+      tv = tv.mul(-1);
       var behind = leader.position.add(tv);
    
       // If the character is on the leader's sight, add a force
@@ -54,7 +65,7 @@ module.exports = (function(){
       // }
    
       // Creates a force to arrive at the behind point
-      force = force.add(this.arrive(behind, 50)); // 50 is the arrive radius
+      force = force.add(this.arrive(behind, 40)); // 50 is the arrive radius
    
       // Add separation force
       force = force.add(this.separation());
@@ -62,9 +73,9 @@ module.exports = (function(){
       return force;
     },
     arrive: function(target, radius){
-      var desired_velocity = this.position.sub(target).normalize();
+      var desired_velocity = target.sub(this.position);
       var distance = desired_velocity.length();
-       
+       //console.log(distance)
       // Check the distance to detect whether the character
       // is inside the slowing area
       if (distance < radius) {
@@ -80,14 +91,13 @@ module.exports = (function(){
     },
 
     separation: function(){
+
       var force = $h.Vector(0,0);
       var neighborCount = 0;
       for (var i = 0; i < $h.gamestate.units.length; i++) {
           var b = $h.gamestate.units[i];
-   
-          if (b != this && this.position.sub(b.position).length() <= 10) {
-              force.x += b.position.x - this.position.x;
-              force.y += b.position.y - this.position.y;
+          if (b != this && this.position.sub(b.position).length() <= 30) {
+              force = b.position.sub(this.position);
               neighborCount++;
           }
       }
@@ -100,7 +110,7 @@ module.exports = (function(){
       }
    
       force.normalize();
-      force.mul(10);
+      force.mul(20);
    
       return force;
     },

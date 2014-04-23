@@ -7,7 +7,7 @@
 (function(window, undefined){
   "use strict";
   var headOn = (function(){
-    var vectorProto;
+    
     var headOn = {
 
         groups: {},
@@ -455,8 +455,23 @@
         },
 
         Vector: function(x, y){
-          var vec = this.entity({x:x,y:y}, vectorProto);
-          return vec;
+          if(this === headOn){
+            return new headOn.Vector(x,y);
+          }
+          if(typeof x !== "number"){
+            if(x){
+              this.x = x.x;
+              this.y = x.y;
+            }else{
+              this.x = 0;
+              this.y = 0;
+            }
+
+          }else{
+            this.x = x;
+            this.y = y;
+          }
+          return this;
         },
         run: function(){
           var that = this;
@@ -659,7 +674,7 @@
         this.center = vec;
       }
     };
-    vectorProto = {
+    headOn.Vector.prototype = {
       normalize: function(){
         var len = this.length();
         return headOn.Vector(this.x/len, this.y/len);

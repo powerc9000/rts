@@ -13,18 +13,19 @@ var dude2 = new Entity(40, 40, 20, 20, "green");
 var dude3 = new Entity(70, 90, 20, 20, "red");
 
 var entities = [dude, dude2, dude3];
-var selectedEntities = [];
+var selectedEntities = {
+  units:[],
+};
 var canvasMouse = mouse($h.canvas("main").canvas.canvas);
 $h.gamestate = {units:entities};
 canvasMouse.listen("rightMouseDown", function(coords, button){
-  var leader = $h.randInt(0, selectedEntities.length-1);
-  leader = selectedEntities[leader];
-	selectedEntities.forEach(function(dude){
-    if(dude === leader){
+	selectedEntities.units.forEach(function(dude){
+    if(dude === selectedEntities.leader){
       dude.isLeader = true;
-      dude.target = coords;
+      dude.target = $h.Vector(coords);
     }else{
-      dude.setLeader(leader);
+      dude.isLeader = false;
+      dude.setLeader(selectedEntities.leader);
     }
 		
 	});
@@ -37,11 +38,11 @@ canvasMouse.listen("leftMouseDown", function(coords, button){
 canvasMouse.listen("mouseUp", function(coords, button){
 	if(button === 1){
 		selectEntitiesInSelection(box);
-    if(!selectedEntities.length){
+    if(!selectedEntities.units.length){
       entities.forEach(function(dude){
         if($h.collides(dude, {position:$h.Vector(coords.x, coords.y), width:1, height:1, angle:0})){
           dude.selected = true;
-          selectedEntities.push(dude);
+          selectedEntities.units.push(dude);
         }
       });
     }
@@ -92,23 +93,28 @@ $h.run();
 
 
 function selectEntitiesInSelection(box){
-	selectedEntities.length = 0;
+  var leader;
+	selectedEntities.units.length = 0;
   box = box || {};
 	box = normalizeBox(box);
+
   if(Object.keys(box).length === 0){
     entities.forEach(function(dude){
       dude.selected = false;
     });
     return;
   }
+
 	entities.forEach(function(dude){
 		if($h.collides(dude, {width:box.width, height:box.height, angle:0, position:$h.Vector(box.x, box.y)})){
-			selectedEntities.push(dude);
+			selectedEntities.units.push(dude);
       dude.selected = true;
 		}else{
       dude.selected = false;
     }
 	});
+  leader = $h.randInt(0, selectedEntities.units.length-1);
+  selectedEntities.leader = selectedEntities.units[leader];
 }
 
 function normalizeBox(box){

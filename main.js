@@ -19,19 +19,30 @@ module.exports = (function(){
     speed:0,
     a:0,
     target: $h.Vector(0,0),
-    velocity: $h.Vector(0,0),
     selected:false,
+    max_velocity:200,
+    velocity: $h.Vector(),
     update:function(delta){
+
       if(!this.isLeader && this.leader){
-        this.followLeader(this.leader);
+        this.velocity = this.velocity.add(this.followLeader(this.leader));
       }else if(this.isLeader){
-        this.arrive(this.target, 50);
+        console.log("leader")
+        this.velocity = this.velocity.add(this.arrive(this.target, 50));
       }
+      this.velocity = this.velocity.add(this.separation());
+      this.position = this.position.add(this.velocity.mul(delta/1000));
     },
     render:function(canvas){
       var stroke = {};
+      var color;
       if(this.selected){
-        stroke = {color:"black", width:2};
+        if(this.isLeader){
+          color = "yellow";
+        }else{
+          color = "black";
+        }
+        stroke = {color:color, width:20};
       }
       canvas.drawRect(this.width, this.height, this.position.x, this.position.y, this.color, stroke);
     },
@@ -40,12 +51,12 @@ module.exports = (function(){
       var force = $h.Vector(0,0);
    
       // Calculate the ahead point
-      tv.normalize();
-      tv.mul(50);
+      tv = tv.normalize();
+      tv = tv.mul(30);
       var ahead = leader.position.add(tv);
    
       // Calculate the behind point
-      tv.mul(-1);
+      tv = tv.mul(-1);
       var behind = leader.position.add(tv);
    
       // If the character is on the leader's sight, add a force
@@ -55,7 +66,7 @@ module.exports = (function(){
       // }
    
       // Creates a force to arrive at the behind point
-      force = force.add(this.arrive(behind, 50)); // 50 is the arrive radius
+      force = force.add(this.arrive(behind, 40)); // 50 is the arrive radius
    
       // Add separation force
       force = force.add(this.separation());
@@ -63,9 +74,9 @@ module.exports = (function(){
       return force;
     },
     arrive: function(target, radius){
-      var desired_velocity = this.position.sub(target).normalize();
+      var desired_velocity = target.sub(this.position);
       var distance = desired_velocity.length();
-       
+       //console.log(distance)
       // Check the distance to detect whether the character
       // is inside the slowing area
       if (distance < radius) {
@@ -81,14 +92,13 @@ module.exports = (function(){
     },
 
     separation: function(){
+
       var force = $h.Vector(0,0);
       var neighborCount = 0;
       for (var i = 0; i < $h.gamestate.units.length; i++) {
           var b = $h.gamestate.units[i];
-   
-          if (b != this && this.position.sub(b.position).length() <= 10) {
-              force.x += b.position.x - this.position.x;
-              force.y += b.position.y - this.position.y;
+          if (b != this && this.position.sub(b.position).length() <= 30) {
+              force = b.position.sub(this.position);
               neighborCount++;
           }
       }
@@ -101,7 +111,7 @@ module.exports = (function(){
       }
    
       force.normalize();
-      force.mul(10);
+      force.mul(20);
    
       return force;
     },
@@ -130,18 +140,19 @@ var dude2 = new Entity(40, 40, 20, 20, "green");
 var dude3 = new Entity(70, 90, 20, 20, "red");
 
 var entities = [dude, dude2, dude3];
-var selectedEntities = [];
+var selectedEntities = {
+  units:[],
+};
 var canvasMouse = mouse($h.canvas("main").canvas.canvas);
 $h.gamestate = {units:entities};
 canvasMouse.listen("rightMouseDown", function(coords, button){
-  var leader = $h.randInt(0, selectedEntities.length-1);
-  leader = selectedEntities[leader];
-	selectedEntities.forEach(function(dude){
-    if(dude === leader){
+	selectedEntities.units.forEach(function(dude){
+    if(dude === selectedEntities.leader){
       dude.isLeader = true;
-      dude.target = coords;
+      dude.target = $h.Vector(coords);
     }else{
-      dude.setLeader(leader);
+      dude.isLeader = false;
+      dude.setLeader(selectedEntities.leader);
     }
 		
 	});
@@ -154,11 +165,11 @@ canvasMouse.listen("leftMouseDown", function(coords, button){
 canvasMouse.listen("mouseUp", function(coords, button){
 	if(button === 1){
 		selectEntitiesInSelection(box);
-    if(!selectedEntities.length){
+    if(!selectedEntities.units.length){
       entities.forEach(function(dude){
         if($h.collides(dude, {position:$h.Vector(coords.x, coords.y), width:1, height:1, angle:0})){
           dude.selected = true;
-          selectedEntities.push(dude);
+          selectedEntities.units.push(dude);
         }
       });
     }
@@ -209,23 +220,28 @@ $h.run();
 
 
 function selectEntitiesInSelection(box){
-	selectedEntities.length = 0;
+  var leader;
+	selectedEntities.units.length = 0;
   box = box || {};
 	box = normalizeBox(box);
+
   if(Object.keys(box).length === 0){
     entities.forEach(function(dude){
       dude.selected = false;
     });
     return;
   }
+
 	entities.forEach(function(dude){
 		if($h.collides(dude, {width:box.width, height:box.height, angle:0, position:$h.Vector(box.x, box.y)})){
-			selectedEntities.push(dude);
+			selectedEntities.units.push(dude);
       dude.selected = true;
 		}else{
       dude.selected = false;
     }
 	});
+  leader = $h.randInt(0, selectedEntities.units.length-1);
+  selectedEntities.leader = selectedEntities.units[leader];
 }
 
 function normalizeBox(box){
@@ -282,7 +298,7 @@ function clone(obj) {
 (function(window, undefined){
   "use strict";
   var headOn = (function(){
-    var vectorProto;
+    
     var headOn = {
 
         groups: {},
@@ -730,8 +746,23 @@ function clone(obj) {
         },
 
         Vector: function(x, y){
-          var vec = this.entity({x:x,y:y}, vectorProto);
-          return vec;
+          if(this === headOn){
+            return new headOn.Vector(x,y);
+          }
+          if(typeof x !== "number"){
+            if(x){
+              this.x = x.x;
+              this.y = x.y;
+            }else{
+              this.x = 0;
+              this.y = 0;
+            }
+
+          }else{
+            this.x = x;
+            this.y = y;
+          }
+          return this;
         },
         run: function(){
           var that = this;
@@ -934,7 +965,7 @@ function clone(obj) {
         this.center = vec;
       }
     };
-    vectorProto = {
+    headOn.Vector.prototype = {
       normalize: function(){
         var len = this.length();
         return headOn.Vector(this.x/len, this.y/len);

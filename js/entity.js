@@ -17,19 +17,20 @@ module.exports = (function(){
     height:0,
     speed:0,
     a:0,
-    target: $h.Vector(0,0),
+    target: $h.Vector(50,50),
     selected:false,
     max_velocity:200,
     velocity: $h.Vector(),
     update:function(delta){
 
-      if(!this.isLeader && this.leader){
-        this.velocity = this.velocity.add(this.followLeader(this.leader));
-      }else if(this.isLeader){
-        console.log("leader")
-        this.velocity = this.velocity.add(this.arrive(this.target, 50));
-      }
-      
+      // if(!this.isLeader && this.leader){
+      //   this.velocity = this.velocity.add(this.followLeader(this.leader));
+      // }else if(this.isLeader){
+
+      //   this.velocity = this.velocity.add(this.arrive(this.target, 50).add(this.separation()))
+      // }
+
+      this.velocity = this.velocity.add(this.arrive(this.target, 50).add(this.flock()));
       this.position = this.position.add(this.velocity.mul(delta/1000));
     },
     render:function(canvas){
@@ -44,14 +45,19 @@ module.exports = (function(){
         stroke = {color:color, width:20};
       }
       canvas.drawRect(this.width, this.height, this.position.x, this.position.y, this.color, stroke);
+      //canvas.drawCircle(this.position.x, this.position.y, 30, "transparent", {width:20, color:"purple"});
     },
+    flock: function(){
+      return this.alignment().add(this.separation()).add(this.cohesion());
+    },
+
     followLeader: function(leader){
       var tv = leader.velocity;
       var force = $h.Vector(0,0);
    
       // Calculate the ahead point
       tv = tv.normalize();
-      tv = tv.mul(30);
+      tv = tv.mul(50);
       var ahead = leader.position.add(tv);
    
       // Calculate the behind point
@@ -65,7 +71,7 @@ module.exports = (function(){
       // }
    
       // Creates a force to arrive at the behind point
-      force = force.add(this.arrive(behind, 40)); // 50 is the arrive radius
+      force = force.add(this.arrive(behind, 50)); // 50 is the arrive radius
    
       // Add separation force
       force = force.add(this.separation());
@@ -89,14 +95,52 @@ module.exports = (function(){
       // Set the steering based on this
       return desired_velocity.sub(this.velocity);
     },
+    alignment: function(){
+      var force = $h.Vector(0,0);
+      var neighborCount = 0;
+      $h.gamestate.units.forEach(function(u){
+        if(u != this){
+          if(this.position.sub(u.position).length() <= 40){
+            force = force.add(u.velocity);
+            neighborCount++;
+          }
+        }
+      }.bind(this));
 
+      if(neighborCount !== 0){
+        force = force.mul(1/neighborCount);
+        force = force.normalize();
+      }
+
+      return force;
+    },
+    cohesion: function(){
+      var force = $h.Vector(0,0);
+      var neighborCount = 0;
+      $h.gamestate.units.forEach(function(u){
+        if(u != this){
+          if(this.position.sub(u.position).length() <= 40){
+            force = force.add(u.position);
+            neighborCount++;
+          }
+        }
+      }.bind(this));
+
+      if(neighborCount !== 0){
+        force = force.mul(1/neighborCount);
+        force = force.sub(this.position);
+        force = force.normalize();
+      }
+
+      return force;
+    },
     separation: function(){
 
       var force = $h.Vector(0,0);
       var neighborCount = 0;
       for (var i = 0; i < $h.gamestate.units.length; i++) {
           var b = $h.gamestate.units[i];
-          if (b != this && this.position.sub(b.position).length() <= 30) {
+          if (b != this && this.position.sub(b.position).length() <= 40) {
               force.x += b.position.x - this.position.x;
               force.y += b.position.y - this.position.y;
               neighborCount++;
@@ -111,7 +155,7 @@ module.exports = (function(){
       }
    
       force = force.normalize();
-      force = force.mul(20);
+      force = force.mul(100);
       return force;
     },
 

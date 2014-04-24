@@ -11,8 +11,9 @@ var draging;
 var dude = new Entity(10,10, 20, 20, "blue");
 var dude2 = new Entity(40, 40, 20, 20, "green");
 var dude3 = new Entity(70, 90, 20, 20, "red");
+var dude4 = new Entity(0, 100, 20, 20, "purple");
 
-var entities = [dude, dude2, dude3];
+var entities = [dude, dude2, dude3, dude4];
 var selectedEntities = {
   units:[],
 };
@@ -26,6 +27,7 @@ canvasMouse.listen("rightMouseDown", function(coords, button){
     }else{
       dude.isLeader = false;
       dude.setLeader(selectedEntities.leader);
+      dude.target = $h.Vector(coords);
     }
 		
 	});

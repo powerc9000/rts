@@ -29,9 +29,28 @@ module.exports = (function(){
 
       //   this.velocity = this.velocity.add(this.arrive(this.target, 50).add(this.separation()))
       // }
-
-      this.velocity = this.velocity.add(this.arrive(this.target, 50).add(this.flock()));
+      if(this.moving){
+        this.velocity = this.velocity.add(this.arrive(this.target, 50).add(this.flock()));
+      }
+      
+      if(this.velocity.length() < 30){
+        this.moving = false;
+        this.velocity = $h.Vector(0,0);
+      }
       this.position = this.position.add(this.velocity.mul(delta/1000));
+      $h.gamestate.units.forEach(function(u){
+        var correction;
+        if(u == this) return;
+        if(correction = $h.collides(this, u)){
+          if(correction.normal.x){
+            this.velocity.x = 0;
+          }
+          if(correction.normal.y){
+            this.velocity.y = 0;
+          }
+          this.position = this.position.sub($h.Vector(correction.normal.x, correction.normal.y).mul(correction.overlap));
+        }
+      }.bind(this));
     },
     render:function(canvas){
       var stroke = {};

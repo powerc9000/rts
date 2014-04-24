@@ -24,10 +24,12 @@ canvasMouse.listen("rightMouseDown", function(coords, button){
     if(dude === selectedEntities.leader){
       dude.isLeader = true;
       dude.target = $h.Vector(coords);
+      dude.moving = true;
     }else{
       dude.isLeader = false;
       dude.setLeader(selectedEntities.leader);
       dude.target = $h.Vector(coords);
+      dude.moving = true;
     }
 		
 	});

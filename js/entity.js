@@ -33,7 +33,7 @@ module.exports = (function(){
         this.velocity = this.velocity.add(this.arrive(this.target, 50).add(this.flock()));
       }
       
-      if(this.velocity.length() < 30){
+      if(this.velocity.length() < 2){
         this.moving = false;
         this.velocity = $h.Vector(0,0);
       }
@@ -63,7 +63,11 @@ module.exports = (function(){
         }
         stroke = {color:color, width:20};
       }
-      canvas.drawRect(this.width, this.height, this.position.x, this.position.y, this.color, stroke);
+     
+      if(this.moving){
+        canvas.drawLine(this.position, this.target, "black");
+      }
+       canvas.drawRect(this.width, this.height, this.position.x, this.position.y, this.color, stroke);
       //canvas.drawCircle(this.position.x, this.position.y, 30, "transparent", {width:20, color:"purple"});
     },
     flock: function(){

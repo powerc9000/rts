@@ -34,7 +34,7 @@ module.exports = (function(){
         this.velocity = this.velocity.add(this.arrive(this.target, 50).add(this.flock()));
       }
       
-      if(this.velocity.length() < 30){
+      if(this.velocity.length() < 2){
         this.moving = false;
         this.velocity = $h.Vector(0,0);
       }
@@ -64,7 +64,11 @@ module.exports = (function(){
         }
         stroke = {color:color, width:20};
       }
-      canvas.drawRect(this.width, this.height, this.position.x, this.position.y, this.color, stroke);
+     
+      if(this.moving){
+        canvas.drawLine(this.position, this.target, "black");
+      }
+       canvas.drawRect(this.width, this.height, this.position.x, this.position.y, this.color, stroke);
       //canvas.drawCircle(this.position.x, this.position.y, 30, "transparent", {width:20, color:"purple"});
     },
     flock: function(){
@@ -192,35 +196,37 @@ var $h = require("./head-on");
 var Entity = require("./entity");
 var mouse = require("./mouse");
 var camera = new $h.Camera(500, 500);
-$h.canvas.create("main", 500, 500, camera);
-$h.canvas("main").append("body");
+
 var startPoint = {};
 var box = {};
 var draging;
 
-var dude = new Entity(10,10, 20, 20, "blue");
-var dude2 = new Entity(40, 40, 20, 20, "green");
-var dude3 = new Entity(70, 90, 20, 20, "red");
-var dude4 = new Entity(0, 100, 20, 20, "purple");
 
-var entities = [dude, dude2, dude3, dude4];
+
+var entities = [];
 var selectedEntities = {
   units:[],
 };
-var canvasMouse = mouse($h.canvas("main").canvas.canvas);
+var canvasMouse;
+
+$h.canvas.create("main", 500, 500, camera);
+canvasMouse = mouse($h.canvas("main").canvas.canvas);
+$h.canvas("main").append("body");
+$h.canvas("main").canvas.canvas.style.border = "1px black solid";
+entities.push(
+  new Entity(10,10, 20, 20, "blue"),
+  new Entity(40, 40, 20, 20, "green"),
+  new Entity(70, 90, 20, 20, "red"),
+  new Entity(0, 100, 20, 20, "purple")
+);
 $h.gamestate = {units:entities};
 canvasMouse.listen("rightMouseDown", function(coords, button){
 	selectedEntities.units.forEach(function(dude){
-    if(dude === selectedEntities.leader){
-      dude.isLeader = true;
+   
+      
       dude.target = $h.Vector(coords);
       dude.moving = true;
-    }else{
-      dude.isLeader = false;
-      dude.setLeader(selectedEntities.leader);
-      dude.target = $h.Vector(coords);
-      dude.moving = true;
-    }
+    
 		
 	});
 	
@@ -932,7 +938,16 @@ function clone(obj) {
         }
         return this;
       },
-
+      drawLine: function(start, end, color){
+        var ctx = this.canvas.ctx;
+        ctx.save();
+        ctx.beginPath();
+        ctx.moveTo(start.x, start.y);
+        ctx.lineTo(end.x, end.y);
+        ctx.strokeStyle = color;
+        ctx.stroke();
+        ctx.restore();
+      },
       drawImageRotated: function(image, rotation, x,y){
         var ctx = this.canvas.ctx;
         var radians = rotation * Math.PI / 180;

@@ -2,35 +2,37 @@ var $h = require("./head-on");
 var Entity = require("./entity");
 var mouse = require("./mouse");
 var camera = new $h.Camera(500, 500);
-$h.canvas.create("main", 500, 500, camera);
-$h.canvas("main").append("body");
+
 var startPoint = {};
 var box = {};
 var draging;
 
-var dude = new Entity(10,10, 20, 20, "blue");
-var dude2 = new Entity(40, 40, 20, 20, "green");
-var dude3 = new Entity(70, 90, 20, 20, "red");
-var dude4 = new Entity(0, 100, 20, 20, "purple");
 
-var entities = [dude, dude2, dude3, dude4];
+
+var entities = [];
 var selectedEntities = {
   units:[],
 };
-var canvasMouse = mouse($h.canvas("main").canvas.canvas);
+var canvasMouse;
+
+$h.canvas.create("main", 500, 500, camera);
+canvasMouse = mouse($h.canvas("main").canvas.canvas);
+$h.canvas("main").append("body");
+$h.canvas("main").canvas.canvas.style.border = "1px black solid";
+entities.push(
+  new Entity(10,10, 20, 20, "blue"),
+  new Entity(40, 40, 20, 20, "green"),
+  new Entity(70, 90, 20, 20, "red"),
+  new Entity(0, 100, 20, 20, "purple")
+);
 $h.gamestate = {units:entities};
 canvasMouse.listen("rightMouseDown", function(coords, button){
 	selectedEntities.units.forEach(function(dude){
-    if(dude === selectedEntities.leader){
-      dude.isLeader = true;
+   
+      
       dude.target = $h.Vector(coords);
       dude.moving = true;
-    }else{
-      dude.isLeader = false;
-      dude.setLeader(selectedEntities.leader);
-      dude.target = $h.Vector(coords);
-      dude.moving = true;
-    }
+    
 		
 	});
 	

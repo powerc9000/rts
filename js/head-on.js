@@ -574,7 +574,16 @@
         }
         return this;
       },
-
+      drawLine: function(start, end, color){
+        var ctx = this.canvas.ctx;
+        ctx.save();
+        ctx.beginPath();
+        ctx.moveTo(start.x, start.y);
+        ctx.lineTo(end.x, end.y);
+        ctx.strokeStyle = color;
+        ctx.stroke();
+        ctx.restore();
+      },
       drawImageRotated: function(image, rotation, x,y){
         var ctx = this.canvas.ctx;
         var radians = rotation * Math.PI / 180;

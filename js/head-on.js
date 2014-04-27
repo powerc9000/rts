@@ -157,9 +157,9 @@
 
           throw new Error("Unable to copy obj! Its type isn't supported.");
         },
-        collides: function(poly1, poly2) {
-          var points1 = this.getPoints(poly1),
-            points2 = this.getPoints(poly2),
+        collides: function(poly1, poly2, center) {
+          var points1 = this.getPoints(poly1, center),
+            points2 = this.getPoints(poly2, center),
             i = 0,
             l = points1.length,
             j, k = points2.length,
@@ -333,7 +333,7 @@
           }
         },
 
-        getPoints: function (obj){
+        getPoints: function (obj, center){
           if(obj.type === "circle"){
             return [];
           }
@@ -343,18 +343,29 @@
             height = obj.height,
             angle = obj.angle,
             that = this,
+            h,
+            w,
             points = [];
-
-          points[0] = [x,y];
-          points[1] = [];
-          points[1].push(Math.sin(-angle) * height + x);
-          points[1].push(Math.cos(-angle) * height + y);
-          points[2] = [];
-          points[2].push(Math.cos(angle) * width + points[1][0]);
-          points[2].push(Math.sin(angle) * width + points[1][1]);
-          points[3] = [];
-          points[3].push(Math.cos(angle) * width + x);
-          points[3].push(Math.sin(angle) * width + y);
+          if(!center){
+            points[0] = [x,y];
+            points[1] = [];
+            points[1].push(Math.sin(-angle) * height + x);
+            points[1].push(Math.cos(-angle) * height + y);
+            points[2] = [];
+            points[2].push(Math.cos(angle) * width + points[1][0]);
+            points[2].push(Math.sin(angle) * width + points[1][1]);
+            points[3] = [];
+            points[3].push(Math.cos(angle) * width + x);
+            points[3].push(Math.sin(angle) * width + y);
+          }else{
+            w = (width/2);
+            h = (height/2);
+            points[0] = [x-w, y-h];
+            points[1] = [x+w, y-h];
+            points[2] = [x+w, y+h];
+            points[3] = [x-w, y+h];
+          }
+          
             //console.log(points);
           return points;
 
@@ -724,7 +735,12 @@
       add: function(vec2){
         return headOn.Vector(this.x + vec2.x, this.y + vec2.y);
       },
-
+      truncate: function(max){
+        var i;
+        i = max / this.length();
+        i = i < 1 ? i : 1;
+        return this.mul(i);
+      },
       mul: function(scalar){
         return headOn.Vector(this.x * scalar, this.y * scalar);
       }

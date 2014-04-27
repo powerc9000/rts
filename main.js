@@ -23,18 +23,20 @@ module.exports = (function(){
     max_velocity:200,
     velocity: $h.Vector(),
     update:function(delta){
-
+      var steering ;
       // if(!this.isLeader && this.leader){
       //   this.velocity = this.velocity.add(this.followLeader(this.leader));
       // }else if(this.isLeader){
 
       //   this.velocity = this.velocity.add(this.arrive(this.target, 50).add(this.separation()))
       // }
-      if(this.moving){
-        this.velocity = this.velocity.add(this.arrive(this.target, 50).add(this.flock()));
-      }
+      //if(this.moving){
+        steering = this.arrive(this.target, 70).add(this.flock()).add(this.collisionAvoidance());
+        this.velocity = this.velocity.add(steering);
+        this.velocity = this.velocity.truncate(this.max_velocity);
+      //}
       
-      if(this.velocity.length() < 2){
+      if(this.velocity.length() < 10){
         this.moving = false;
         this.velocity = $h.Vector(0,0);
       }
@@ -42,7 +44,7 @@ module.exports = (function(){
       $h.gamestate.units.forEach(function(u){
         var correction;
         if(u == this) return;
-        if(correction = $h.collides(this, u)){
+        if(correction = $h.collides(this, u, true)){
           if(correction.normal.x){
             this.velocity.x = 0;
           }
@@ -68,15 +70,17 @@ module.exports = (function(){
       if(this.moving){
         canvas.drawLine(this.position, this.target, "black");
       }
-       canvas.drawRect(this.width, this.height, this.position.x - this.width/2, this.position.y - this.width/2, this.color, stroke);
+      canvas.drawRect(this.width, this.height, this.position.x - this.width/2, this.position.y - this.width/2, this.color, stroke);
       canvas.drawCircle(this.position.x, this.position.y, $h.variable.NEIGHBOR_RADIUS, "transparent", {width:1, color:this.color});
+      canvas.drawLine(this.position, this.position.add(this.velocity), "red");
     },
     flock: function(){
       return this.alignment().add(this.separation()).add(this.cohesion());
     },
     collisionAvoidance: function(){
-      var MAX_AVOID_FORCE = 100;
-      var ahead = this.position.add(this.velocity.normalize().mul(100)); // calculate the ahead vector
+      var MAX_AVOID_FORCE = 70;
+      var dynamicLength = this.velocity.length() / this.max_velocity;
+      var ahead = this.position.add(this.velocity.normalize().mul(dynamicLength)); // calculate the ahead vector
       var ahead2 = ahead.mul(0.5); // calculate the ahead2 vector
     
       var mostThreatening  = this.findMostThreateningObstacle(ahead, ahead2);
@@ -84,8 +88,7 @@ module.exports = (function(){
       var avoidance = new $h.Vector(0,0);
     
       if (mostThreatening !== null) {
-          avoidance.x = ahead.x - mostThreatening.x;
-          avoidance.y = ahead.y - mostThreatening.y;
+          
           avoidance = ahead.sub(mostThreatening);
           avoidance = avoidance.normalize();
           avoidance = avoidance.mul(MAX_AVOID_FORCE);
@@ -98,10 +101,9 @@ module.exports = (function(){
     findMostThreateningObstacle: function(ahead, ahead2){
       var mostThreatening = null;
       $h.gamestate.units.forEach(function(u){
-       
-        if(u === this) return;
+        if(this.group.indexOf(u) > -1 || this === u) return;
         u = u.position;
-        var collision  = ahead.distance(u) <= 30 || ahead.distance(u) <= 30;
+        var collision  = ahead.distance(u) <= 30 || ahead2.distance(u) <= 30;
         //console.log(collision);
         //console.log(ahead)
         // "position" is the character's current position
@@ -158,6 +160,7 @@ module.exports = (function(){
     alignment: function(){
       var force = $h.Vector(0,0);
       var neighborCount = 0;
+      this.group = this.group || [];
       this.group.forEach(function(u){
         if(u != this){
           if(this.position.sub(u.position).length() <= $h.variable.NEIGHBOR_RADIUS){
@@ -330,11 +333,12 @@ canvasMouse.listen("drag", function(coords){
   
 });
 canvasMouse.listen("mouseUp", function(coords, button){
+  coords = camera.project(coords);
 	if(button === 1){
 		selectEntitiesInSelection(box);
     if(!selectedEntities.units.length){
       entities.forEach(function(dude){
-        if($h.collides(dude, {position:$h.Vector(coords.x, coords.y), width:1, height:1, angle:0})){
+        if($h.collides(dude, {position:$h.Vector(coords.x, coords.y), width:1, height:1, angle:0}, true)){
           dude.selected = true;
           selectedEntities.units.push(dude);
         }
@@ -605,9 +609,9 @@ function clone(obj) {
 
           throw new Error("Unable to copy obj! Its type isn't supported.");
         },
-        collides: function(poly1, poly2) {
-          var points1 = this.getPoints(poly1),
-            points2 = this.getPoints(poly2),
+        collides: function(poly1, poly2, center) {
+          var points1 = this.getPoints(poly1, center),
+            points2 = this.getPoints(poly2, center),
             i = 0,
             l = points1.length,
             j, k = points2.length,
@@ -781,7 +785,7 @@ function clone(obj) {
           }
         },
 
-        getPoints: function (obj){
+        getPoints: function (obj, center){
           if(obj.type === "circle"){
             return [];
           }
@@ -791,18 +795,29 @@ function clone(obj) {
             height = obj.height,
             angle = obj.angle,
             that = this,
+            h,
+            w,
             points = [];
-
-          points[0] = [x,y];
-          points[1] = [];
-          points[1].push(Math.sin(-angle) * height + x);
-          points[1].push(Math.cos(-angle) * height + y);
-          points[2] = [];
-          points[2].push(Math.cos(angle) * width + points[1][0]);
-          points[2].push(Math.sin(angle) * width + points[1][1]);
-          points[3] = [];
-          points[3].push(Math.cos(angle) * width + x);
-          points[3].push(Math.sin(angle) * width + y);
+          if(!center){
+            points[0] = [x,y];
+            points[1] = [];
+            points[1].push(Math.sin(-angle) * height + x);
+            points[1].push(Math.cos(-angle) * height + y);
+            points[2] = [];
+            points[2].push(Math.cos(angle) * width + points[1][0]);
+            points[2].push(Math.sin(angle) * width + points[1][1]);
+            points[3] = [];
+            points[3].push(Math.cos(angle) * width + x);
+            points[3].push(Math.sin(angle) * width + y);
+          }else{
+            w = (width/2);
+            h = (height/2);
+            points[0] = [x-w, y-h];
+            points[1] = [x+w, y-h];
+            points[2] = [x+w, y+h];
+            points[3] = [x-w, y+h];
+          }
+          
             //console.log(points);
           return points;
 
@@ -1172,7 +1187,12 @@ function clone(obj) {
       add: function(vec2){
         return headOn.Vector(this.x + vec2.x, this.y + vec2.y);
       },
-
+      truncate: function(max){
+        var i;
+        i = max / this.length();
+        i = i < 1 ? i : 1;
+        return this.mul(i);
+      },
       mul: function(scalar){
         return headOn.Vector(this.x * scalar, this.y * scalar);
       }

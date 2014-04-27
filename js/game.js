@@ -100,11 +100,12 @@ canvasMouse.listen("drag", function(coords){
   
 });
 canvasMouse.listen("mouseUp", function(coords, button){
+  coords = camera.project(coords);
 	if(button === 1){
 		selectEntitiesInSelection(box);
     if(!selectedEntities.units.length){
       entities.forEach(function(dude){
-        if($h.collides(dude, {position:$h.Vector(coords.x, coords.y), width:1, height:1, angle:0})){
+        if($h.collides(dude, {position:$h.Vector(coords.x, coords.y), width:1, height:1, angle:0}, true)){
           dude.selected = true;
           selectedEntities.units.push(dude);
         }

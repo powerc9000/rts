@@ -22,18 +22,20 @@ module.exports = (function(){
     max_velocity:200,
     velocity: $h.Vector(),
     update:function(delta){
-
+      var steering ;
       // if(!this.isLeader && this.leader){
       //   this.velocity = this.velocity.add(this.followLeader(this.leader));
       // }else if(this.isLeader){
 
       //   this.velocity = this.velocity.add(this.arrive(this.target, 50).add(this.separation()))
       // }
-      if(this.moving){
-        this.velocity = this.velocity.add(this.arrive(this.target, 50).add(this.flock()));
-      }
+      //if(this.moving){
+        steering = this.arrive(this.target, 70).add(this.flock()).add(this.collisionAvoidance());
+        this.velocity = this.velocity.add(steering);
+        this.velocity = this.velocity.truncate(this.max_velocity);
+      //}
       
-      if(this.velocity.length() < 2){
+      if(this.velocity.length() < 10){
         this.moving = false;
         this.velocity = $h.Vector(0,0);
       }
@@ -41,7 +43,7 @@ module.exports = (function(){
       $h.gamestate.units.forEach(function(u){
         var correction;
         if(u == this) return;
-        if(correction = $h.collides(this, u)){
+        if(correction = $h.collides(this, u, true)){
           if(correction.normal.x){
             this.velocity.x = 0;
           }
@@ -67,15 +69,17 @@ module.exports = (function(){
       if(this.moving){
         canvas.drawLine(this.position, this.target, "black");
       }
-       canvas.drawRect(this.width, this.height, this.position.x - this.width/2, this.position.y - this.width/2, this.color, stroke);
+      canvas.drawRect(this.width, this.height, this.position.x - this.width/2, this.position.y - this.width/2, this.color, stroke);
       canvas.drawCircle(this.position.x, this.position.y, $h.variable.NEIGHBOR_RADIUS, "transparent", {width:1, color:this.color});
+      canvas.drawLine(this.position, this.position.add(this.velocity), "red");
     },
     flock: function(){
       return this.alignment().add(this.separation()).add(this.cohesion());
     },
     collisionAvoidance: function(){
-      var MAX_AVOID_FORCE = 100;
-      var ahead = this.position.add(this.velocity.normalize().mul(100)); // calculate the ahead vector
+      var MAX_AVOID_FORCE = 70;
+      var dynamicLength = this.velocity.length() / this.max_velocity;
+      var ahead = this.position.add(this.velocity.normalize().mul(dynamicLength)); // calculate the ahead vector
       var ahead2 = ahead.mul(0.5); // calculate the ahead2 vector
     
       var mostThreatening  = this.findMostThreateningObstacle(ahead, ahead2);
@@ -83,8 +87,7 @@ module.exports = (function(){
       var avoidance = new $h.Vector(0,0);
     
       if (mostThreatening !== null) {
-          avoidance.x = ahead.x - mostThreatening.x;
-          avoidance.y = ahead.y - mostThreatening.y;
+          
           avoidance = ahead.sub(mostThreatening);
           avoidance = avoidance.normalize();
           avoidance = avoidance.mul(MAX_AVOID_FORCE);
@@ -97,10 +100,9 @@ module.exports = (function(){
     findMostThreateningObstacle: function(ahead, ahead2){
       var mostThreatening = null;
       $h.gamestate.units.forEach(function(u){
-       
-        if(u === this) return;
+        if(this.group.indexOf(u) > -1 || this === u) return;
         u = u.position;
-        var collision  = ahead.distance(u) <= 30 || ahead.distance(u) <= 30;
+        var collision  = ahead.distance(u) <= 30 || ahead2.distance(u) <= 30;
         //console.log(collision);
         //console.log(ahead)
         // "position" is the character's current position
@@ -157,6 +159,7 @@ module.exports = (function(){
     alignment: function(){
       var force = $h.Vector(0,0);
       var neighborCount = 0;
+      this.group = this.group || [];
       this.group.forEach(function(u){
         if(u != this){
           if(this.position.sub(u.position).length() <= $h.variable.NEIGHBOR_RADIUS){

@@ -520,7 +520,7 @@
         var ctx = this.canvas.ctx;
         ctx.save();
         if(stroke){
-          ctx.lineWith = stroke.width;
+          ctx.lineWidth = stroke.width;
           ctx.strokeStyle = stroke.color;
           ctx.stroke();
         }
@@ -697,7 +697,9 @@
         this.x /= len;
         this.y /= len;
       },
-
+      distance: function(vec2){
+        return this.sub(vec2).length();
+      },
       dot: function(vec2){
         return vec2.x * this.x + vec2.y * this.y;
       },

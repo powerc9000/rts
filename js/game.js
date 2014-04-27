@@ -7,14 +7,14 @@ var startPoint = {};
 var box = {};
 var draging;
 
-
+var inputBox = document.createElement("input");
 
 var entities = [];
 var selectedEntities = {
   units:[],
 };
 var canvasMouse;
-
+inputBox = document.body.appendChild(inputBox);
 $h.canvas.create("main", 500, 500, camera);
 canvasMouse = mouse($h.canvas("main").canvas.canvas);
 $h.canvas("main").append("body");
@@ -23,16 +23,31 @@ entities.push(
   new Entity(10,10, 20, 20, "blue"),
   new Entity(40, 40, 20, 20, "green"),
   new Entity(70, 90, 20, 20, "red"),
-  new Entity(0, 100, 20, 20, "purple")
+  new Entity(0, 100, 20, 20, "purple"),
+  new Entity(0, 150, 20, 20, "black"),
+  new Entity(0, 200, 20, 20, "orange"),
+  new Entity(60, 110, 20, 20, "pink"),
+  new Entity(40, 100, 20, 20, "brown"),
+  new Entity(70, 150, 20, 20, "grey")
 );
+entities[2].max_velocity = 300;
 $h.gamestate = {units:entities};
+$h.variable = {
+  SEPARATION_CONST: 70,
+  NEIGHBOR_RADIUS: 40,
+};
+inputBox.value = 40;
+inputBox.addEventListener("change", function(e){
+  console.log("ehy");
+  $h.variable.NEIGHBOR_RADIUS = parseInt(this.value, 10);
+});
 canvasMouse.listen("rightMouseDown", function(coords, button){
 	selectedEntities.units.forEach(function(dude){
    
       
       dude.target = $h.Vector(coords);
       dude.moving = true;
-    
+      dude.group = selectedEntities.units;
 		
 	});
 	

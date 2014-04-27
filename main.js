@@ -62,19 +62,55 @@ module.exports = (function(){
         }else{
           color = "black";
         }
-        stroke = {color:color, width:20};
+        stroke = {color:color, width:2};
       }
      
       if(this.moving){
         canvas.drawLine(this.position, this.target, "black");
       }
-       canvas.drawRect(this.width, this.height, this.position.x, this.position.y, this.color, stroke);
-      //canvas.drawCircle(this.position.x, this.position.y, 30, "transparent", {width:20, color:"purple"});
+       canvas.drawRect(this.width, this.height, this.position.x - this.width/2, this.position.y - this.width/2, this.color, stroke);
+      canvas.drawCircle(this.position.x, this.position.y, $h.variable.NEIGHBOR_RADIUS, "transparent", {width:1, color:this.color});
     },
     flock: function(){
       return this.alignment().add(this.separation()).add(this.cohesion());
     },
-
+    collisionAvoidance: function(){
+      var MAX_AVOID_FORCE = 100;
+      var ahead = this.position.add(this.velocity.normalize().mul(100)); // calculate the ahead vector
+      var ahead2 = ahead.mul(0.5); // calculate the ahead2 vector
+    
+      var mostThreatening  = this.findMostThreateningObstacle(ahead, ahead2);
+     
+      var avoidance = new $h.Vector(0,0);
+    
+      if (mostThreatening !== null) {
+          avoidance.x = ahead.x - mostThreatening.x;
+          avoidance.y = ahead.y - mostThreatening.y;
+          avoidance = ahead.sub(mostThreatening);
+          avoidance = avoidance.normalize();
+          avoidance = avoidance.mul(MAX_AVOID_FORCE);
+      } else {
+          avoidance = avoidance.mul(0); // nullify the avoidance force
+      }
+    
+       return avoidance;
+    },
+    findMostThreateningObstacle: function(ahead, ahead2){
+      var mostThreatening = null;
+      $h.gamestate.units.forEach(function(u){
+       
+        if(u === this) return;
+        u = u.position;
+        var collision  = ahead.distance(u) <= 30 || ahead.distance(u) <= 30;
+        //console.log(collision);
+        //console.log(ahead)
+        // "position" is the character's current position
+        if (collision && (mostThreatening === null || this.position.distance(u) < this.position.distance(mostThreatening))) {
+            mostThreatening = u;
+        }
+      }.bind(this));
+      return mostThreatening;
+    },
     followLeader: function(leader){
       var tv = leader.velocity;
       var force = $h.Vector(0,0);
@@ -122,9 +158,9 @@ module.exports = (function(){
     alignment: function(){
       var force = $h.Vector(0,0);
       var neighborCount = 0;
-      $h.gamestate.units.forEach(function(u){
+      this.group.forEach(function(u){
         if(u != this){
-          if(this.position.sub(u.position).length() <= 40){
+          if(this.position.sub(u.position).length() <= $h.variable.NEIGHBOR_RADIUS){
             force = force.add(u.velocity);
             neighborCount++;
           }
@@ -141,9 +177,9 @@ module.exports = (function(){
     cohesion: function(){
       var force = $h.Vector(0,0);
       var neighborCount = 0;
-      $h.gamestate.units.forEach(function(u){
+      this.group.forEach(function(u){
         if(u != this){
-          if(this.position.sub(u.position).length() <= 40){
+          if(this.position.sub(u.position).length() <= $h.variable.NEIGHBOR_RADIUS){
             force = force.add(u.position);
             neighborCount++;
           }
@@ -164,7 +200,7 @@ module.exports = (function(){
       var neighborCount = 0;
       for (var i = 0; i < $h.gamestate.units.length; i++) {
           var b = $h.gamestate.units[i];
-          if (b != this && this.position.sub(b.position).length() <= 40) {
+          if (b != this && this.position.sub(b.position).length() <= $h.variable.NEIGHBOR_RADIUS) {
               force.x += b.position.x - this.position.x;
               force.y += b.position.y - this.position.y;
               neighborCount++;
@@ -179,7 +215,7 @@ module.exports = (function(){
       }
    
       force = force.normalize();
-      force = force.mul(100);
+      force = force.mul($h.variable.SEPARATION_CONST);
       return force;
     },
 
@@ -201,14 +237,14 @@ var startPoint = {};
 var box = {};
 var draging;
 
-
+var inputBox = document.createElement("input");
 
 var entities = [];
 var selectedEntities = {
   units:[],
 };
 var canvasMouse;
-
+inputBox = document.body.appendChild(inputBox);
 $h.canvas.create("main", 500, 500, camera);
 canvasMouse = mouse($h.canvas("main").canvas.canvas);
 $h.canvas("main").append("body");
@@ -217,16 +253,31 @@ entities.push(
   new Entity(10,10, 20, 20, "blue"),
   new Entity(40, 40, 20, 20, "green"),
   new Entity(70, 90, 20, 20, "red"),
-  new Entity(0, 100, 20, 20, "purple")
+  new Entity(0, 100, 20, 20, "purple"),
+  new Entity(0, 150, 20, 20, "black"),
+  new Entity(0, 200, 20, 20, "orange"),
+  new Entity(60, 110, 20, 20, "pink"),
+  new Entity(40, 100, 20, 20, "brown"),
+  new Entity(70, 150, 20, 20, "grey")
 );
+entities[2].max_velocity = 300;
 $h.gamestate = {units:entities};
+$h.variable = {
+  SEPARATION_CONST: 70,
+  NEIGHBOR_RADIUS: 40,
+};
+inputBox.value = 40;
+inputBox.addEventListener("change", function(e){
+  console.log("ehy");
+  $h.variable.NEIGHBOR_RADIUS = parseInt(this.value, 10);
+});
 canvasMouse.listen("rightMouseDown", function(coords, button){
 	selectedEntities.units.forEach(function(dude){
    
       
       dude.target = $h.Vector(coords);
       dude.moving = true;
-    
+      dude.group = selectedEntities.units;
 		
 	});
 	
@@ -884,7 +935,7 @@ function clone(obj) {
         var ctx = this.canvas.ctx;
         ctx.save();
         if(stroke){
-          ctx.lineWith = stroke.width;
+          ctx.lineWidth = stroke.width;
           ctx.strokeStyle = stroke.color;
           ctx.stroke();
         }
@@ -1061,7 +1112,9 @@ function clone(obj) {
         this.x /= len;
         this.y /= len;
       },
-
+      distance: function(vec2){
+        return this.sub(vec2).length();
+      },
       dot: function(vec2){
         return vec2.x * this.x + vec2.y * this.y;
       },

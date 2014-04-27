@@ -1,7 +1,7 @@
 var $h = require("./head-on");
 var Entity = require("./entity");
 var mouse = require("./mouse");
-var camera = new $h.Camera(500, 500);
+var camera = new $h.Camera(1000, 600);
 
 var startPoint = {};
 var box = {};
@@ -15,8 +15,8 @@ var selectedEntities = {
 };
 var canvasMouse;
 inputBox = document.body.appendChild(inputBox);
-$h.canvas.create("main", 500, 500, camera);
-canvasMouse = mouse($h.canvas("main").canvas.canvas);
+$h.canvas.create("main", 1000, 600, camera);
+canvasMouse = mouse($h.canvas("main").canvas.canvas, camera);
 $h.canvas("main").append("body");
 $h.canvas("main").canvas.canvas.style.border = "1px black solid";
 entities.push(
@@ -38,23 +38,66 @@ $h.variable = {
 };
 inputBox.value = 40;
 inputBox.addEventListener("change", function(e){
-  console.log("ehy");
   $h.variable.NEIGHBOR_RADIUS = parseInt(this.value, 10);
 });
 canvasMouse.listen("rightMouseDown", function(coords, button){
+  //clone selected entities
+  coords = camera.project(coords);
+  var group = selectedEntities.units.slice(0);
 	selectedEntities.units.forEach(function(dude){
-   
-      
+      var g = dude.group;
+      //Remove from old group
+      if(g)
+      g.splice(g.indexOf(dude), 1);
+
       dude.target = $h.Vector(coords);
       dude.moving = true;
-      dude.group = selectedEntities.units;
+      dude.group = group;
 		
 	});
 	
 });
 canvasMouse.listen("leftMouseDown", function(coords, button){
+  coords = camera.project(coords);
 	startPoint = coords;
 	draging = true;
+});
+canvasMouse.listen("scroll", function(direction){
+  switch(direction){
+    case "up":
+      camera.move($h.Vector(0,-2));
+      break;
+    case "down":
+      camera.move($h.Vector(0,2));
+      break;
+    case "left":
+      camera.move($h.Vector(-2,0));
+      break;
+    case "right":
+      camera.move($h.Vector(2,2));
+      break;
+
+  }
+});
+canvasMouse.listen("drag", function(coords){
+  coords = camera.project(coords);
+  box.x = startPoint.x;
+  box.y = startPoint.y;
+  if(coords.x > startPoint.x){
+    box.width = Math.abs(startPoint.x - coords.x);
+  }
+  else{
+    
+    box.width = Math.abs(startPoint.x - coords.x) *-1;
+  }
+  if(coords.y > startPoint.y){
+    box.height = Math.abs(startPoint.y - coords.y);
+  }
+  else{
+    
+    box.height = Math.abs(startPoint.y - coords.y) *-1;
+  }
+  
 });
 canvasMouse.listen("mouseUp", function(coords, button){
 	if(button === 1){
@@ -72,25 +115,13 @@ canvasMouse.listen("mouseUp", function(coords, button){
 	startPoint = {};
 	box = {};
 });
-canvasMouse.listen("drag", function(coords){
-	box.x = startPoint.x;
-	box.y = startPoint.y;
-	if(coords.x > startPoint.x){
-		box.width = Math.abs(startPoint.x - coords.x);
-	}
-	else{
-		
-		box.width = Math.abs(startPoint.x - coords.x) *-1;
-	}
-	if(coords.y > startPoint.y){
-		box.height = Math.abs(startPoint.y - coords.y);
-	}
-	else{
-		
-		box.height = Math.abs(startPoint.y - coords.y) *-1;
-	}
-	
-});
+
+
+document.addEventListener("webkitpointerlockchange", function(e){
+  console.log(e);
+}, false);
+
+
 $h.update(function(delta){
 	entities.forEach(function(dude){
     dude.update(delta);
@@ -99,13 +130,15 @@ $h.update(function(delta){
 });
 $h.render(function(){
 	var c = $h.canvas("main");
-	c.drawRect(500, 500, 0, 0, "white");
+	c.clear();
 	entities.forEach(function(dude){
 		dude.render(c);
 	});
 	if(draging){
 		c.drawRect(box.width, box.height, box.x, box.y, "rgba(0,128, 0, .2)", {color:"green", width:2});
 	}
+  var m = camera.project(canvasMouse.mousePos());
+  c.drawRect(5,5, m.x, m.y, "blue");
 	
 
 });

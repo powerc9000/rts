@@ -197,8 +197,8 @@ module.exports = (function(){
 
       var force = $h.Vector(0,0);
       var neighborCount = 0;
-      for (var i = 0; i < $h.gamestate.units.length; i++) {
-          var b = $h.gamestate.units[i];
+      for (var i = 0; i < this.group.length; i++) {
+          var b = this.group[i];
           if (b != this && this.position.sub(b.position).length() <= $h.variable.NEIGHBOR_RADIUS) {
               force.x += b.position.x - this.position.x;
               force.y += b.position.y - this.position.y;

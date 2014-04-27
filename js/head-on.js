@@ -576,6 +576,9 @@
       },
       drawLine: function(start, end, color){
         var ctx = this.canvas.ctx;
+        var camera = this.canvas.camera;
+        start = camera.unproject(start);
+        end = camera.unproject(end);
         ctx.save();
         ctx.beginPath();
         ctx.moveTo(start.x, start.y);
@@ -681,6 +684,12 @@
       moveTo: function(vec){
         this.position = vec.sub(this.dimensions.mul(0.5).mul(this.zoomAmt));
         this.center = vec;
+      },
+      project: function(vec){
+        return vec.add(this.position);
+      },
+      unproject: function(vec){
+        return vec.sub(this.position);
       }
     };
     headOn.Vector.prototype = {

@@ -198,8 +198,8 @@ module.exports = (function(){
 
       var force = $h.Vector(0,0);
       var neighborCount = 0;
-      for (var i = 0; i < $h.gamestate.units.length; i++) {
-          var b = $h.gamestate.units[i];
+      for (var i = 0; i < this.group.length; i++) {
+          var b = this.group[i];
           if (b != this && this.position.sub(b.position).length() <= $h.variable.NEIGHBOR_RADIUS) {
               force.x += b.position.x - this.position.x;
               force.y += b.position.y - this.position.y;
@@ -231,7 +231,7 @@ module.exports = (function(){
 var $h = require("./head-on");
 var Entity = require("./entity");
 var mouse = require("./mouse");
-var camera = new $h.Camera(500, 500);
+var camera = new $h.Camera(1000, 600);
 
 var startPoint = {};
 var box = {};
@@ -245,8 +245,8 @@ var selectedEntities = {
 };
 var canvasMouse;
 inputBox = document.body.appendChild(inputBox);
-$h.canvas.create("main", 500, 500, camera);
-canvasMouse = mouse($h.canvas("main").canvas.canvas);
+$h.canvas.create("main", 1000, 600, camera);
+canvasMouse = mouse($h.canvas("main").canvas.canvas, camera);
 $h.canvas("main").append("body");
 $h.canvas("main").canvas.canvas.style.border = "1px black solid";
 entities.push(
@@ -268,23 +268,66 @@ $h.variable = {
 };
 inputBox.value = 40;
 inputBox.addEventListener("change", function(e){
-  console.log("ehy");
   $h.variable.NEIGHBOR_RADIUS = parseInt(this.value, 10);
 });
 canvasMouse.listen("rightMouseDown", function(coords, button){
+  //clone selected entities
+  coords = camera.project(coords);
+  var group = selectedEntities.units.slice(0);
 	selectedEntities.units.forEach(function(dude){
-   
-      
+      var g = dude.group;
+      //Remove from old group
+      if(g)
+      g.splice(g.indexOf(dude), 1);
+
       dude.target = $h.Vector(coords);
       dude.moving = true;
-      dude.group = selectedEntities.units;
+      dude.group = group;
 		
 	});
 	
 });
 canvasMouse.listen("leftMouseDown", function(coords, button){
+  coords = camera.project(coords);
 	startPoint = coords;
 	draging = true;
+});
+canvasMouse.listen("scroll", function(direction){
+  switch(direction){
+    case "up":
+      camera.move($h.Vector(0,-2));
+      break;
+    case "down":
+      camera.move($h.Vector(0,2));
+      break;
+    case "left":
+      camera.move($h.Vector(-2,0));
+      break;
+    case "right":
+      camera.move($h.Vector(2,2));
+      break;
+
+  }
+});
+canvasMouse.listen("drag", function(coords){
+  coords = camera.project(coords);
+  box.x = startPoint.x;
+  box.y = startPoint.y;
+  if(coords.x > startPoint.x){
+    box.width = Math.abs(startPoint.x - coords.x);
+  }
+  else{
+    
+    box.width = Math.abs(startPoint.x - coords.x) *-1;
+  }
+  if(coords.y > startPoint.y){
+    box.height = Math.abs(startPoint.y - coords.y);
+  }
+  else{
+    
+    box.height = Math.abs(startPoint.y - coords.y) *-1;
+  }
+  
 });
 canvasMouse.listen("mouseUp", function(coords, button){
 	if(button === 1){
@@ -302,25 +345,13 @@ canvasMouse.listen("mouseUp", function(coords, button){
 	startPoint = {};
 	box = {};
 });
-canvasMouse.listen("drag", function(coords){
-	box.x = startPoint.x;
-	box.y = startPoint.y;
-	if(coords.x > startPoint.x){
-		box.width = Math.abs(startPoint.x - coords.x);
-	}
-	else{
-		
-		box.width = Math.abs(startPoint.x - coords.x) *-1;
-	}
-	if(coords.y > startPoint.y){
-		box.height = Math.abs(startPoint.y - coords.y);
-	}
-	else{
-		
-		box.height = Math.abs(startPoint.y - coords.y) *-1;
-	}
-	
-});
+
+
+document.addEventListener("webkitpointerlockchange", function(e){
+  console.log(e);
+}, false);
+
+
 $h.update(function(delta){
 	entities.forEach(function(dude){
     dude.update(delta);
@@ -329,13 +360,15 @@ $h.update(function(delta){
 });
 $h.render(function(){
 	var c = $h.canvas("main");
-	c.drawRect(500, 500, 0, 0, "white");
+	c.clear();
 	entities.forEach(function(dude){
 		dude.render(c);
 	});
 	if(draging){
 		c.drawRect(box.width, box.height, box.x, box.y, "rgba(0,128, 0, .2)", {color:"green", width:2});
 	}
+  var m = camera.project(canvasMouse.mousePos());
+  c.drawRect(5,5, m.x, m.y, "blue");
 	
 
 });
@@ -991,6 +1024,9 @@ function clone(obj) {
       },
       drawLine: function(start, end, color){
         var ctx = this.canvas.ctx;
+        var camera = this.canvas.camera;
+        start = camera.unproject(start);
+        end = camera.unproject(end);
         ctx.save();
         ctx.beginPath();
         ctx.moveTo(start.x, start.y);
@@ -1096,6 +1132,12 @@ function clone(obj) {
       moveTo: function(vec){
         this.position = vec.sub(this.dimensions.mul(0.5).mul(this.zoomAmt));
         this.center = vec;
+      },
+      project: function(vec){
+        return vec.add(this.position);
+      },
+      unproject: function(vec){
+        return vec.sub(this.position);
       }
     };
     headOn.Vector.prototype = {
@@ -1157,12 +1199,23 @@ function clone(obj) {
 })(window);
 },{}],4:[function(require,module,exports){
 //Setup event listeners for the mouse
-module.exports = function(obj){
+var $h = require("./head-on");
+module.exports = function(obj, camera){
   "use strict";
   var listeners = {};
   obj = obj || window;
   var dragging;
 
+  var mousePos = $h.Vector(obj.width/2, obj.height/2);
+  obj.requestPointerLock = obj.requestPointerLock ||
+             obj.mozRequestPointerLock ||
+             obj.webkitRequestPointerLock;
+             obj.requestPointerLock();
+
+  obj.addEventListener("mousemove", function(e){
+   
+  });
+  
   function getCoords(e){
     try{
        var bounds = obj.getBoundingClientRect();
@@ -1175,22 +1228,26 @@ module.exports = function(obj){
   }
 
   obj.addEventListener("mousedown", function(e){
+    obj.requestPointerLock();
     var button = e.which || e.button;
     var coords = getCoords(e);
     if(button === 1){
       dragging = true;
     }
     if(listeners.mousedown){
-      listeners.mousedown.call(null, coords, button);
+      listeners.mousedown.call(null, mousePos, button);
     }
     if(listeners.leftmousedown && button === 1){
-      listeners.leftmousedown.call(null, coords);
+      listeners.leftmousedown.call(null, mousePos);
+    }
+    if(listeners.rightmousedown && button === 3){
+      listeners.rightmousedown.call(null, mousePos);
     }
   });
   obj.addEventListener("contextmenu", function(e){
     var coords = getCoords(e);
     if(listeners.rightmousedown){
-      listeners.rightmousedown.call(null, coords);
+      listeners.rightmousedown.call(null, mousePos);
       e.preventDefault();
     }
   });
@@ -1202,26 +1259,50 @@ module.exports = function(obj){
     }
     
     if(listeners.mouseup){
-      listeners.mouseup.call(null, coords, button);
+      listeners.mouseup.call(null, mousePos, button);
     }
   });
   obj.addEventListener("mousemove", function(e){
     var coords = getCoords(e);
+    var vec = {x:e.webkitMovementX, y:e.webkitMovementY};
+    var scroll = false;
+    mousePos = mousePos.add(vec);
+    if(mousePos.x > obj.width-5){
+      scroll = "right";
+      mousePos.x = obj.width-5 ;
+    }
+    else if(mousePos.x < 0){
+      scroll = "left";
+      mousePos.x = 0;
+    }
+    if(mousePos.y > obj.height -5){
+      scroll = "down";
+      mousePos.y = obj.height -5;
+    }else if(mousePos.y < 0){
+      scroll = "up";
+      mousePos.y = 0;
+    }
+    if(scroll && listeners.scroll){
+      listeners.scroll.call(null, scroll);
+    }
     if(listeners.mousemove){
-      listeners.mousemove.call(null, coords);
+      listeners.mousemove.call(null, mousePos);
     }
     if(listeners.drag){
       if(dragging){
-        listeners.drag.call(null, coords);
+        listeners.drag.call(null, mousePos);
       }
     }
   });
   return{
     listen:function(type, cb){
       listeners[type.toLowerCase()] = cb;
+    },
+    mousePos:function(){
+      return mousePos;
     }
   };
 
 };
 
-},{}]},{},[2])
+},{"./head-on":3}]},{},[2])

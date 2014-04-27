@@ -20,9 +20,11 @@ module.exports = (function(){
     target: $h.Vector(50,50),
     selected:false,
     max_velocity:200,
+    moveTries: 0,
     velocity: $h.Vector(),
     update:function(delta){
       var steering ;
+      var lastPos = this.position;
       // if(!this.isLeader && this.leader){
       //   this.velocity = this.velocity.add(this.followLeader(this.leader));
       // }else if(this.isLeader){
@@ -33,9 +35,9 @@ module.exports = (function(){
         steering = this.arrive(this.target, 70).add(this.flock()).add(this.collisionAvoidance());
         this.velocity = this.velocity.add(steering);
         this.velocity = this.velocity.truncate(this.max_velocity);
-      //}
+     // }
       
-      if(this.velocity.length() < 10){
+      if(this.velocity.length() < 20){
         this.moving = false;
         this.velocity = $h.Vector(0,0);
       }

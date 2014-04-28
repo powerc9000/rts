@@ -23,8 +23,11 @@ module.exports = (function(){
     moveTries: 0,
     velocity: $h.Vector(),
     update:function(delta){
+      delta = delta/1000;
+      //console.log(delta);
       var steering ;
       var lastPos = this.position;
+      var correction;
       // if(!this.isLeader && this.leader){
       //   this.velocity = this.velocity.add(this.followLeader(this.leader));
       // }else if(this.isLeader){
@@ -41,11 +44,12 @@ module.exports = (function(){
         this.moving = false;
         this.velocity = $h.Vector(0,0);
       }
-      this.position = this.position.add(this.velocity.mul(delta/1000));
+      this.position = this.position.add(this.velocity.mul(delta));
       $h.gamestate.units.forEach(function(u){
         var correction;
         if(u == this) return;
-        if(correction = $h.collides(this, u, true)){
+        correction = $h.collides(this, u, true);
+        if(correction){
           if(correction.normal.x){
             this.velocity.x = 0;
           }

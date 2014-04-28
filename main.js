@@ -24,8 +24,11 @@ module.exports = (function(){
     moveTries: 0,
     velocity: $h.Vector(),
     update:function(delta){
+      delta = delta/1000;
+      //console.log(delta);
       var steering ;
       var lastPos = this.position;
+      var correction;
       // if(!this.isLeader && this.leader){
       //   this.velocity = this.velocity.add(this.followLeader(this.leader));
       // }else if(this.isLeader){
@@ -42,11 +45,12 @@ module.exports = (function(){
         this.moving = false;
         this.velocity = $h.Vector(0,0);
       }
-      this.position = this.position.add(this.velocity.mul(delta/1000));
+      this.position = this.position.add(this.velocity.mul(delta));
       $h.gamestate.units.forEach(function(u){
         var correction;
         if(u == this) return;
-        if(correction = $h.collides(this, u, true)){
+        correction = $h.collides(this, u, true);
+        if(correction){
           if(correction.normal.x){
             this.velocity.x = 0;
           }
@@ -266,6 +270,13 @@ entities.push(
   new Entity(70, 150, 20, 20, "grey")
 );
 entities[2].max_velocity = 300;
+var map = {
+  width:2000,
+  height:2000,
+  tileWidth:20,
+  tileHeight:20,
+  map:genMap(2000,2000,20,20)
+};
 $h.gamestate = {units:entities};
 $h.variable = {
   SEPARATION_CONST: 70,
@@ -300,16 +311,16 @@ canvasMouse.listen("leftMouseDown", function(coords, button){
 canvasMouse.listen("scroll", function(direction){
   switch(direction){
     case "up":
-      camera.move($h.Vector(0,-2));
+      camera.move($h.Vector(0,-4));
       break;
     case "down":
-      camera.move($h.Vector(0,2));
+      camera.move($h.Vector(0,4));
       break;
     case "left":
-      camera.move($h.Vector(-2,0));
+      camera.move($h.Vector(-4,0));
       break;
     case "right":
-      camera.move($h.Vector(2,2));
+      camera.move($h.Vector(4,0));
       break;
 
   }
@@ -359,14 +370,19 @@ document.addEventListener("webkitpointerlockchange", function(e){
 
 
 $h.update(function(delta){
+  
+  
 	entities.forEach(function(dude){
     dude.update(delta);
   });
 	
 });
+
 $h.render(function(){
 	var c = $h.canvas("main");
+
 	c.clear();
+  drawMap(c, map, camera);
 	entities.forEach(function(dude){
 		dude.render(c);
 	});
@@ -375,7 +391,6 @@ $h.render(function(){
 	}
   var m = camera.project(canvasMouse.mousePos());
   c.drawRect(5,5, m.x, m.y, "blue");
-	
 
 });
 //$h.loadImages();
@@ -450,6 +465,48 @@ function clone(obj) {
     }
 
     throw new Error("Unable to copy obj! Its type isn't supported.");
+}
+
+function drawMap(canvas, map, camera){
+  var tiles = map.map;
+  var topleft = {x:0,y:0};
+  var topright = {x:0,y:0};
+  var botleft = {x:0,y:0};
+  var botright = {x:0, y:0};
+  for(var y = 0; y < tiles.length; y++){
+    topleft.y = y*map.tileHeight;
+    topright.y = topleft.y;
+    botleft.y = y*map.tileHeight + map.tileHeight;
+    botright.y = botleft.y;
+    for(var x = 0; x<tiles[y].length; x++){
+      if(tiles[y][x] === 0){
+        topleft.x = x*map.tileWidth;
+        topright.x = x*map.tileWidth + map.tileWidth;
+        botleft.x = topleft.x;
+        botright.x = topright.x;
+          if(camera.inView(topleft) || 
+            camera.inView(topright) ||
+            camera.inView(botleft) ||
+            camera.inView(botright)
+            ){
+            canvas.drawRect(map.tileWidth, map.tileHeight, x*map.tileWidth, y*map.tileHeight, "purple");
+          }
+      }
+    }
+  }
+}
+
+function genMap(width, height, tileW, tileH){
+  var rows = height/tileH;
+  var cols = width/tileW;
+  var map = [];
+  for(var y = 0; y < rows; y++){
+    map[y] = [];
+    for(var x = 0; x < cols; x++){
+      map[y][x] = 0;
+    }
+  }
+  return map;
 }
 },{"./entity":1,"./head-on":3,"./mouse":4}],3:[function(require,module,exports){
 //     __  __         __           _  
@@ -887,16 +944,7 @@ function clone(obj) {
             return new Image();
           }
         },
-        onTick: function(then){
-          var now = Date.now(),
-          modifier = now - then;
-            this.trueFps = 1/(modifier/1000);
-          this._ticks+=1;
-          this._update(modifier, this._ticks);
-          this._render(modifier, this._ticks);
-          this.gameTime += modifier;
 
-        },
 
         timeout: function(cb, time, scope){
           setTimeout(function(){
@@ -941,16 +989,28 @@ function clone(obj) {
         run: function(){
           var that = this;
           var then = Date.now();
-
+          var ltime;
           window.requestAnimationFrame(aniframe);
           function aniframe(){
+            //We want the time inbetween frames not the time in between frames + time it took to do a frame
+            ltime = then;
             if(that.imagesLoaded){
-              that.onTick(then);
               then = Date.now();
+              that.onTick(ltime);
 
             }
             window.requestAnimationFrame(aniframe);
           }
+
+        },
+        onTick: function(then){
+          var now = Date.now(),
+          modifier = now - then;
+          this.trueFps = 1/(modifier/1000);
+          this._ticks+=1;
+          this._update(modifier, this._ticks);
+          this._render(modifier, this._ticks);
+          this.gameTime += modifier;
 
         },
         exception: function(message){
@@ -1145,6 +1205,13 @@ function clone(obj) {
         this.position = this.position.add(vec);
         this.center = this.position.add(headOn.Vector(this.width, this.height).mul(0.5));
         return this;
+      },
+      inView: function(vec){
+        if(vec.x >= this.position.x && vec.x <= this.position.x + this.width && vec.y >= this.position.y && vec.y <= this.position.y + this.height){
+          return true;
+        }else{
+          return false;
+        }
       },
       moveTo: function(vec){
         this.position = vec.sub(this.dimensions.mul(0.5).mul(this.zoomAmt));

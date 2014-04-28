@@ -433,16 +433,7 @@
             return new Image();
           }
         },
-        onTick: function(then){
-          var now = Date.now(),
-          modifier = now - then;
-            this.trueFps = 1/(modifier/1000);
-          this._ticks+=1;
-          this._update(modifier, this._ticks);
-          this._render(modifier, this._ticks);
-          this.gameTime += modifier;
 
-        },
 
         timeout: function(cb, time, scope){
           setTimeout(function(){
@@ -487,16 +478,28 @@
         run: function(){
           var that = this;
           var then = Date.now();
-
+          var ltime;
           window.requestAnimationFrame(aniframe);
           function aniframe(){
+            //We want the time inbetween frames not the time in between frames + time it took to do a frame
+            ltime = then;
             if(that.imagesLoaded){
-              that.onTick(then);
               then = Date.now();
+              that.onTick(ltime);
 
             }
             window.requestAnimationFrame(aniframe);
           }
+
+        },
+        onTick: function(then){
+          var now = Date.now(),
+          modifier = now - then;
+          this.trueFps = 1/(modifier/1000);
+          this._ticks+=1;
+          this._update(modifier, this._ticks);
+          this._render(modifier, this._ticks);
+          this.gameTime += modifier;
 
         },
         exception: function(message){
@@ -691,6 +694,13 @@
         this.position = this.position.add(vec);
         this.center = this.position.add(headOn.Vector(this.width, this.height).mul(0.5));
         return this;
+      },
+      inView: function(vec){
+        if(vec.x >= this.position.x && vec.x <= this.position.x + this.width && vec.y >= this.position.y && vec.y <= this.position.y + this.height){
+          return true;
+        }else{
+          return false;
+        }
       },
       moveTo: function(vec){
         this.position = vec.sub(this.dimensions.mul(0.5).mul(this.zoomAmt));

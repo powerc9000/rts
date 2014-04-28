@@ -31,6 +31,13 @@ entities.push(
   new Entity(70, 150, 20, 20, "grey")
 );
 entities[2].max_velocity = 300;
+var map = {
+  width:2000,
+  height:2000,
+  tileWidth:20,
+  tileHeight:20,
+  map:genMap(2000,2000,20,20)
+};
 $h.gamestate = {units:entities};
 $h.variable = {
   SEPARATION_CONST: 70,
@@ -65,16 +72,16 @@ canvasMouse.listen("leftMouseDown", function(coords, button){
 canvasMouse.listen("scroll", function(direction){
   switch(direction){
     case "up":
-      camera.move($h.Vector(0,-2));
+      camera.move($h.Vector(0,-4));
       break;
     case "down":
-      camera.move($h.Vector(0,2));
+      camera.move($h.Vector(0,4));
       break;
     case "left":
-      camera.move($h.Vector(-2,0));
+      camera.move($h.Vector(-4,0));
       break;
     case "right":
-      camera.move($h.Vector(2,2));
+      camera.move($h.Vector(4,0));
       break;
 
   }
@@ -124,14 +131,19 @@ document.addEventListener("webkitpointerlockchange", function(e){
 
 
 $h.update(function(delta){
+  
+  
 	entities.forEach(function(dude){
     dude.update(delta);
   });
 	
 });
+
 $h.render(function(){
 	var c = $h.canvas("main");
+
 	c.clear();
+  drawMap(c, map, camera);
 	entities.forEach(function(dude){
 		dude.render(c);
 	});
@@ -140,7 +152,6 @@ $h.render(function(){
 	}
   var m = camera.project(canvasMouse.mousePos());
   c.drawRect(5,5, m.x, m.y, "blue");
-	
 
 });
 //$h.loadImages();
@@ -215,4 +226,46 @@ function clone(obj) {
     }
 
     throw new Error("Unable to copy obj! Its type isn't supported.");
+}
+
+function drawMap(canvas, map, camera){
+  var tiles = map.map;
+  var topleft = {x:0,y:0};
+  var topright = {x:0,y:0};
+  var botleft = {x:0,y:0};
+  var botright = {x:0, y:0};
+  for(var y = 0; y < tiles.length; y++){
+    topleft.y = y*map.tileHeight;
+    topright.y = topleft.y;
+    botleft.y = y*map.tileHeight + map.tileHeight;
+    botright.y = botleft.y;
+    for(var x = 0; x<tiles[y].length; x++){
+      if(tiles[y][x] === 0){
+        topleft.x = x*map.tileWidth;
+        topright.x = x*map.tileWidth + map.tileWidth;
+        botleft.x = topleft.x;
+        botright.x = topright.x;
+          if(camera.inView(topleft) || 
+            camera.inView(topright) ||
+            camera.inView(botleft) ||
+            camera.inView(botright)
+            ){
+            canvas.drawRect(map.tileWidth, map.tileHeight, x*map.tileWidth, y*map.tileHeight, "purple");
+          }
+      }
+    }
+  }
+}
+
+function genMap(width, height, tileW, tileH){
+  var rows = height/tileH;
+  var cols = width/tileW;
+  var map = [];
+  for(var y = 0; y < rows; y++){
+    map[y] = [];
+    for(var x = 0; x < cols; x++){
+      map[y][x] = 0;
+    }
+  }
+  return map;
 }

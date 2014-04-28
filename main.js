@@ -312,15 +312,27 @@ canvasMouse.listen("scroll", function(direction){
   switch(direction){
     case "up":
       camera.move($h.Vector(0,-4));
+      if(camera.position.y < 0){
+        camera.move($h.Vector(0,4));
+      }
       break;
     case "down":
       camera.move($h.Vector(0,4));
+      if(camera.position.x + camera.height > map.height){
+        camera.move($h.Vector(0,-4));
+      }
       break;
     case "left":
       camera.move($h.Vector(-4,0));
+      if(camera.position.x < 0){
+        camera.move($h.Vector(4,0));
+      }
       break;
     case "right":
       camera.move($h.Vector(4,0));
+      if(camera.position.x + camera.width > map.width){
+        camera.move($h.Vector(-4,0));
+      }
       break;
 
   }

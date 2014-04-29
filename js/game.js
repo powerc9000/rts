@@ -22,12 +22,34 @@ $h.canvas("main").canvas.canvas.style.border = "1px black solid";
 entities.push(
   new Entity(10,10, 20, 20, "blue"),
   new Entity(40, 40, 20, 20, "green"),
-  new Entity(70, 90, 20, 20, "red"),
+  new Entity(70, 90, 40, 40, "red"),
   new Entity(0, 100, 20, 20, "purple"),
   new Entity(0, 150, 20, 20, "black"),
   new Entity(0, 200, 20, 20, "orange"),
   new Entity(60, 110, 20, 20, "pink"),
   new Entity(40, 100, 20, 20, "brown"),
+  new Entity(70, 150, 20, 20, "grey"),
+  new Entity(70, 150, 20, 20, "grey"),
+  new Entity(70, 150, 20, 20, "grey"),
+  new Entity(70, 150, 20, 20, "grey"),
+  new Entity(70, 150, 20, 20, "grey"),
+  new Entity(70, 150, 20, 20, "grey"),
+  new Entity(70, 150, 20, 20, "grey"),
+  new Entity(70, 150, 20, 20, "grey"),
+  new Entity(70, 150, 20, 20, "grey"),
+  new Entity(70, 150, 20, 20, "grey"),
+  new Entity(70, 150, 20, 20, "grey"),
+  new Entity(70, 150, 20, 20, "grey"),
+  new Entity(70, 150, 20, 20, "grey"),
+  new Entity(70, 150, 20, 20, "grey"),
+  new Entity(70, 150, 20, 20, "grey"),
+  new Entity(70, 150, 20, 20, "grey"),
+  new Entity(70, 150, 20, 20, "grey"),
+  new Entity(70, 150, 20, 20, "grey"),
+  new Entity(70, 150, 20, 20, "grey"),
+  new Entity(70, 150, 20, 20, "grey"),
+  new Entity(70, 150, 20, 20, "grey"),
+  new Entity(70, 150, 20, 20, "grey"),
   new Entity(70, 150, 20, 20, "grey")
 );
 entities[2].max_velocity = 300;
@@ -64,6 +86,7 @@ canvasMouse.listen("rightMouseDown", function(coords, button){
 	});
 	
 });
+//camera.zoomIn(2);
 canvasMouse.listen("leftMouseDown", function(coords, button){
   coords = camera.project(coords);
 	startPoint = coords;
@@ -79,7 +102,7 @@ canvasMouse.listen("scroll", function(direction){
       break;
     case "down":
       camera.move($h.Vector(0,4));
-      if(camera.position.x + camera.height > map.height){
+      if(camera.position.y + camera.height > map.height){
         camera.move($h.Vector(0,-4));
       }
       break;
@@ -276,7 +299,12 @@ function genMap(width, height, tileW, tileH){
   for(var y = 0; y < rows; y++){
     map[y] = [];
     for(var x = 0; x < cols; x++){
-      map[y][x] = 0;
+      var rand = $h.randInt(0,20);
+      if(rand > 5){
+        map[y][x] = 0;
+      }else{
+        map[y][x] = 1;
+      }
     }
   }
   return map;

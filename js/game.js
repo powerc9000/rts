@@ -76,15 +76,16 @@ canvasMouse.listen("rightMouseDown", function(coords, button){
 	selectedEntities.units.forEach(function(dude){
       var g = dude.group;
       //Remove from old group
-      if(g)
-      g.splice(g.indexOf(dude), 1);
+      if(g){
+        g.splice(g.indexOf(dude), 1);
+      }
 
       dude.target = $h.Vector(coords);
       dude.moving = true;
       dude.group = group;
-		
+
 	});
-	
+
 });
 //camera.zoomIn(2);
 canvasMouse.listen("leftMouseDown", function(coords, button){
@@ -129,17 +130,17 @@ canvasMouse.listen("drag", function(coords){
     box.width = Math.abs(startPoint.x - coords.x);
   }
   else{
-    
+
     box.width = Math.abs(startPoint.x - coords.x) *-1;
   }
   if(coords.y > startPoint.y){
     box.height = Math.abs(startPoint.y - coords.y);
   }
   else{
-    
+
     box.height = Math.abs(startPoint.y - coords.y) *-1;
   }
-  
+
 });
 canvasMouse.listen("mouseUp", function(coords, button){
   coords = camera.project(coords);
@@ -166,12 +167,12 @@ document.addEventListener("webkitpointerlockchange", function(e){
 
 
 $h.update(function(delta){
-  
-  
+
+
 	entities.forEach(function(dude){
     dude.update(delta);
   });
-	
+
 });
 
 $h.render(function(){
@@ -280,7 +281,7 @@ function drawMap(canvas, map, camera){
         topright.x = x*map.tileWidth + map.tileWidth;
         botleft.x = topleft.x;
         botright.x = topright.x;
-          if(camera.inView(topleft) || 
+          if(camera.inView(topleft) ||
             camera.inView(topright) ||
             camera.inView(botleft) ||
             camera.inView(botright)

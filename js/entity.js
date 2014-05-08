@@ -39,7 +39,7 @@ module.exports = (function(){
         this.velocity = this.velocity.add(steering);
         this.velocity = this.velocity.truncate(this.max_velocity);
      // }
-      
+
       if(this.velocity.length() < 20){
         this.moving = false;
         this.velocity = $h.Vector(0,0);
@@ -71,7 +71,7 @@ module.exports = (function(){
         }
         stroke = {color:color, width:2};
       }
-     
+
       if(this.moving){
         canvas.drawLine(this.position, this.target, "black");
       }
@@ -87,20 +87,20 @@ module.exports = (function(){
       var dynamicLength = this.velocity.length() / this.max_velocity;
       var ahead = this.position.add(this.velocity.normalize().mul(dynamicLength)); // calculate the ahead vector
       var ahead2 = ahead.mul(0.5); // calculate the ahead2 vector
-    
+
       var mostThreatening  = this.findMostThreateningObstacle(ahead, ahead2);
-     
+
       var avoidance = new $h.Vector(0,0);
-    
+
       if (mostThreatening !== null) {
-          
+
           avoidance = ahead.sub(mostThreatening);
           avoidance = avoidance.normalize();
           avoidance = avoidance.mul(MAX_AVOID_FORCE);
       } else {
           avoidance = avoidance.mul(0); // nullify the avoidance force
       }
-    
+
        return avoidance;
     },
     findMostThreateningObstacle: function(ahead, ahead2){
@@ -121,28 +121,28 @@ module.exports = (function(){
     followLeader: function(leader){
       var tv = leader.velocity;
       var force = $h.Vector(0,0);
-   
+
       // Calculate the ahead point
       tv = tv.normalize();
       tv = tv.mul(50);
       var ahead = leader.position.add(tv);
-   
+
       // Calculate the behind point
       tv = tv.mul(-1);
       var behind = leader.position.add(tv);
-   
+
       // If the character is on the leader's sight, add a force
       // to evade the route immediately.
       // if (isOnLeaderSight(leader, ahead)) {
       //     force = force.add(this.evade(leader));
       // }
-   
+
       // Creates a force to arrive at the behind point
       force = force.add(this.arrive(behind, 50)); // 50 is the arrive radius
-   
+
       // Add separation force
       force = force.add(this.separation());
-   
+
       return force;
     },
     arrive: function(target, radius){
@@ -158,7 +158,7 @@ module.exports = (function(){
           // Outside the slowing area.
           desired_velocity = desired_velocity.normalize().mul(this.max_velocity);
       }
-       
+
       // Set the steering based on this
       return desired_velocity.sub(this.velocity);
     },
@@ -214,14 +214,14 @@ module.exports = (function(){
               neighborCount++;
           }
       }
-   
+
       if (neighborCount !== 0) {
           force.x /= neighborCount;
           force.y /= neighborCount;
-   
+
           force = force.mul( -1);
       }
-   
+
       force = force.normalize();
       force = force.mul($h.variable.SEPARATION_CONST);
       return force;

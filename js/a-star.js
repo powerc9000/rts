@@ -11,14 +11,13 @@ function AStar(start, goal, map){
     start.hScore = costEstimate(start.coords, goal.coords);
     start.fScore = start.gScore + start.hScore;   // Cost from start along best known path.
     // Estimated total cost from start to goal through y.
-     
+
     while(openset.length > 0){
     	current = getLowestFScore(openset);
         if(!differ(current, goal)){
         	return reconstruct_path(came_from, goal);
         }
-            
-         
+  
         setRemove(openset, current);
         closedset.push(current);
         neighbors = neighborNodes(current, map);
@@ -27,7 +26,7 @@ function AStar(start, goal, map){
             if (setContains(closedset, neighbor)){
             	continue;
             }
-                    
+
             if(!setContains(openset, neighbor)){
                 openset.push(neighbor);
                 neighbor.parent = current;
@@ -35,11 +34,11 @@ function AStar(start, goal, map){
                 neighbor.gScore = gScore(curret, neighbor);
                 neightbor.fScore = neighbor.gScore + neighbor.hScore;
             }
-                
+
         }
     }
 
-       
+
 
     return failure
 

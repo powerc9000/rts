@@ -40,7 +40,7 @@ module.exports = (function(){
         this.velocity = this.velocity.add(steering);
         this.velocity = this.velocity.truncate(this.max_velocity);
      // }
-      
+
       if(this.velocity.length() < 20){
         this.moving = false;
         this.velocity = $h.Vector(0,0);
@@ -72,7 +72,7 @@ module.exports = (function(){
         }
         stroke = {color:color, width:2};
       }
-     
+
       if(this.moving){
         canvas.drawLine(this.position, this.target, "black");
       }
@@ -88,20 +88,20 @@ module.exports = (function(){
       var dynamicLength = this.velocity.length() / this.max_velocity;
       var ahead = this.position.add(this.velocity.normalize().mul(dynamicLength)); // calculate the ahead vector
       var ahead2 = ahead.mul(0.5); // calculate the ahead2 vector
-    
+
       var mostThreatening  = this.findMostThreateningObstacle(ahead, ahead2);
-     
+
       var avoidance = new $h.Vector(0,0);
-    
+
       if (mostThreatening !== null) {
-          
+
           avoidance = ahead.sub(mostThreatening);
           avoidance = avoidance.normalize();
           avoidance = avoidance.mul(MAX_AVOID_FORCE);
       } else {
           avoidance = avoidance.mul(0); // nullify the avoidance force
       }
-    
+
        return avoidance;
     },
     findMostThreateningObstacle: function(ahead, ahead2){
@@ -122,28 +122,28 @@ module.exports = (function(){
     followLeader: function(leader){
       var tv = leader.velocity;
       var force = $h.Vector(0,0);
-   
+
       // Calculate the ahead point
       tv = tv.normalize();
       tv = tv.mul(50);
       var ahead = leader.position.add(tv);
-   
+
       // Calculate the behind point
       tv = tv.mul(-1);
       var behind = leader.position.add(tv);
-   
+
       // If the character is on the leader's sight, add a force
       // to evade the route immediately.
       // if (isOnLeaderSight(leader, ahead)) {
       //     force = force.add(this.evade(leader));
       // }
-   
+
       // Creates a force to arrive at the behind point
       force = force.add(this.arrive(behind, 50)); // 50 is the arrive radius
-   
+
       // Add separation force
       force = force.add(this.separation());
-   
+
       return force;
     },
     arrive: function(target, radius){
@@ -159,7 +159,7 @@ module.exports = (function(){
           // Outside the slowing area.
           desired_velocity = desired_velocity.normalize().mul(this.max_velocity);
       }
-       
+
       // Set the steering based on this
       return desired_velocity.sub(this.velocity);
     },
@@ -215,14 +215,14 @@ module.exports = (function(){
               neighborCount++;
           }
       }
-   
+
       if (neighborCount !== 0) {
           force.x /= neighborCount;
           force.y /= neighborCount;
-   
+
           force = force.mul( -1);
       }
-   
+
       force = force.normalize();
       force = force.mul($h.variable.SEPARATION_CONST);
       return force;
@@ -247,17 +247,21 @@ var box = {};
 var draging;
 
 var inputBox = document.createElement("input");
-
+var minicam = new $h.Camera(200,200);
+var minimap = $h.canvas.create("minimap",200,200, minicam);
 var entities = [];
 var selectedEntities = {
   units:[],
 };
 var canvasMouse;
+
 inputBox = document.body.appendChild(inputBox);
 $h.canvas.create("main", 1000, 600, camera);
 canvasMouse = mouse($h.canvas("main").canvas.canvas, camera);
 $h.canvas("main").append("body");
+$h.canvas("minimap").append("body");
 $h.canvas("main").canvas.canvas.style.border = "1px black solid";
+$h.canvas("minimap").canvas.canvas.style.border = "1px black solid";
 entities.push(
   new Entity(10,10, 20, 20, "blue"),
   new Entity(40, 40, 20, 20, "green"),
@@ -315,15 +319,16 @@ canvasMouse.listen("rightMouseDown", function(coords, button){
 	selectedEntities.units.forEach(function(dude){
       var g = dude.group;
       //Remove from old group
-      if(g)
-      g.splice(g.indexOf(dude), 1);
+      if(g){
+        g.splice(g.indexOf(dude), 1);
+      }
 
       dude.target = $h.Vector(coords);
       dude.moving = true;
       dude.group = group;
-		
+
 	});
-	
+
 });
 //camera.zoomIn(2);
 canvasMouse.listen("leftMouseDown", function(coords, button){
@@ -368,17 +373,17 @@ canvasMouse.listen("drag", function(coords){
     box.width = Math.abs(startPoint.x - coords.x);
   }
   else{
-    
+
     box.width = Math.abs(startPoint.x - coords.x) *-1;
   }
   if(coords.y > startPoint.y){
     box.height = Math.abs(startPoint.y - coords.y);
   }
   else{
-    
+
     box.height = Math.abs(startPoint.y - coords.y) *-1;
   }
-  
+
 });
 canvasMouse.listen("mouseUp", function(coords, button){
   coords = camera.project(coords);
@@ -405,21 +410,25 @@ document.addEventListener("webkitpointerlockchange", function(e){
 
 
 $h.update(function(delta){
-  
-  
+
+
 	entities.forEach(function(dude){
     dude.update(delta);
   });
-	
-});
 
+});
+minicam.zoomOut(10);
+minicam.moveTo($h.Vector(1000,1000));
 $h.render(function(){
 	var c = $h.canvas("main");
-
+  var m = $h.canvas("minimap");
 	c.clear();
+  m.clear();
   drawMap(c, map, camera);
+  drawMap(m, map, minicam);
 	entities.forEach(function(dude){
 		dude.render(c);
+    dude.render(m);
 	});
 	if(draging){
 		c.drawRect(box.width, box.height, box.x, box.y, "rgba(0,128, 0, .2)", {color:"green", width:2});
@@ -519,7 +528,7 @@ function drawMap(canvas, map, camera){
         topright.x = x*map.tileWidth + map.tileWidth;
         botleft.x = topleft.x;
         botright.x = topright.x;
-          if(camera.inView(topleft) || 
+          if(camera.inView(topleft) ||
             camera.inView(topright) ||
             camera.inView(botleft) ||
             camera.inView(botright)
@@ -548,17 +557,18 @@ function genMap(width, height, tileW, tileH){
   }
   return map;
 }
+
 },{"./entity":1,"./head-on":3,"./mouse":4}],3:[function(require,module,exports){
-//     __  __         __           _  
+//     __  __         __           _
 //    / / / /__  ____ _____/ /  ____  ____         (_)____
 //   / /_/ / _ \/ __ `/ __  /_____/ __ \/ __ \    / / ___/
-//  / __  /  __/ /_/ / /_/ /_____/ /_/ / / / /   / (__  ) 
-// /_/ /_/\___/\__,_/\__,_/      \____/_/ /_(_)_/ /____/  
-//                         /___/    
+//  / __  /  __/ /_/ / /_/ /_____/ /_/ / / / /   / (__  )
+// /_/ /_/\___/\__,_/\__,_/      \____/_/ /_(_)_/ /____/
+//                         /___/
 (function(window, undefined){
   "use strict";
   var headOn = (function(){
-    
+
     var headOn = {
 
         groups: {},
@@ -663,9 +673,9 @@ function genMap(width, height, tileW, tileH){
           sub.prototype.constructor = sub;
           // In ECMAScript5+ (all modern browsers), you can make the constructor property
           // non-enumerable if you define it like this instead
-          Object.defineProperty(sub.prototype, 'constructor', { 
-            enumerable: false, 
-            value: sub 
+          Object.defineProperty(sub.prototype, 'constructor', {
+            enumerable: false,
+            value: sub
           });
         },
 
@@ -868,7 +878,7 @@ function genMap(width, height, tileW, tileH){
               if (circleDistance.x > (rect.width/2 + circle.radius)) { return false; }
               if (circleDistance.y > (rect.height/2 + circle.radius)) { return false; }
 
-              if (circleDistance.x <= (rect.width/2)) { return true; } 
+              if (circleDistance.x <= (rect.width/2)) { return true; }
               if (circleDistance.y <= (rect.height/2)) { return true; }
 
               cornerDistance_sq = Math.pow(circleDistance.x - rect.width/2,2) +
@@ -916,7 +926,7 @@ function genMap(width, height, tileW, tileH){
             points[2] = [x+w, y+h];
             points[3] = [x-w, y+h];
           }
-          
+
             //console.log(points);
           return points;
 
@@ -1132,7 +1142,7 @@ function genMap(width, height, tileW, tileH){
       drawImage: function(image,x,y){
         var ctx = this.canvas.ctx;
         try{
-          ctx.drawImage(image,x,y); 
+          ctx.drawImage(image,x,y);
         }
         catch(e){
           console.log(image);
@@ -1247,7 +1257,7 @@ function genMap(width, height, tileW, tileH){
         return this;
       },
       inView: function(vec){
-        if(vec.x >= this.position.x && vec.x <= this.position.x + this.width && vec.y >= this.position.y && vec.y <= this.position.y + this.height){
+        if(vec.x >= this.position.x && vec.x <= this.position.x + this.width *this.zoomAmt && vec.y >= this.position.y && vec.y <= this.position.y + this.height*this.zoomAmt){
           return true;
         }else{
           return false;
@@ -1326,6 +1336,7 @@ function genMap(width, height, tileW, tileH){
   module.exports = headOn;
   window.headOn = headOn;
 })(window);
+
 },{}],4:[function(require,module,exports){
 //Setup event listeners for the mouse
 var $h = require("./head-on");

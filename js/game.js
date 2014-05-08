@@ -8,17 +8,21 @@ var box = {};
 var draging;
 
 var inputBox = document.createElement("input");
-
+var minicam = new $h.Camera(200,200);
+var minimap = $h.canvas.create("minimap",200,200, minicam);
 var entities = [];
 var selectedEntities = {
   units:[],
 };
 var canvasMouse;
+
 inputBox = document.body.appendChild(inputBox);
 $h.canvas.create("main", 1000, 600, camera);
 canvasMouse = mouse($h.canvas("main").canvas.canvas, camera);
 $h.canvas("main").append("body");
+$h.canvas("minimap").append("body");
 $h.canvas("main").canvas.canvas.style.border = "1px black solid";
+$h.canvas("minimap").canvas.canvas.style.border = "1px black solid";
 entities.push(
   new Entity(10,10, 20, 20, "blue"),
   new Entity(40, 40, 20, 20, "green"),
@@ -174,14 +178,18 @@ $h.update(function(delta){
   });
 
 });
-
+minicam.zoomOut(10);
+minicam.moveTo($h.Vector(1000,1000));
 $h.render(function(){
 	var c = $h.canvas("main");
-
+  var m = $h.canvas("minimap");
 	c.clear();
+  m.clear();
   drawMap(c, map, camera);
+  drawMap(m, map, minicam);
 	entities.forEach(function(dude){
 		dude.render(c);
+    dude.render(m);
 	});
 	if(draging){
 		c.drawRect(box.width, box.height, box.x, box.y, "rgba(0,128, 0, .2)", {color:"green", width:2});

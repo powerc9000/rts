@@ -1,13 +1,13 @@
-//     __  __         __           _  
+//     __  __         __           _
 //    / / / /__  ____ _____/ /  ____  ____         (_)____
 //   / /_/ / _ \/ __ `/ __  /_____/ __ \/ __ \    / / ___/
-//  / __  /  __/ /_/ / /_/ /_____/ /_/ / / / /   / (__  ) 
-// /_/ /_/\___/\__,_/\__,_/      \____/_/ /_(_)_/ /____/  
-//                         /___/    
+//  / __  /  __/ /_/ / /_/ /_____/ /_/ / / / /   / (__  )
+// /_/ /_/\___/\__,_/\__,_/      \____/_/ /_(_)_/ /____/
+//                         /___/
 (function(window, undefined){
   "use strict";
   var headOn = (function(){
-    
+
     var headOn = {
 
         groups: {},
@@ -112,9 +112,9 @@
           sub.prototype.constructor = sub;
           // In ECMAScript5+ (all modern browsers), you can make the constructor property
           // non-enumerable if you define it like this instead
-          Object.defineProperty(sub.prototype, 'constructor', { 
-            enumerable: false, 
-            value: sub 
+          Object.defineProperty(sub.prototype, 'constructor', {
+            enumerable: false,
+            value: sub
           });
         },
 
@@ -317,7 +317,7 @@
               if (circleDistance.x > (rect.width/2 + circle.radius)) { return false; }
               if (circleDistance.y > (rect.height/2 + circle.radius)) { return false; }
 
-              if (circleDistance.x <= (rect.width/2)) { return true; } 
+              if (circleDistance.x <= (rect.width/2)) { return true; }
               if (circleDistance.y <= (rect.height/2)) { return true; }
 
               cornerDistance_sq = Math.pow(circleDistance.x - rect.width/2,2) +
@@ -365,7 +365,7 @@
             points[2] = [x+w, y+h];
             points[3] = [x-w, y+h];
           }
-          
+
             //console.log(points);
           return points;
 
@@ -581,7 +581,7 @@
       drawImage: function(image,x,y){
         var ctx = this.canvas.ctx;
         try{
-          ctx.drawImage(image,x,y); 
+          ctx.drawImage(image,x,y);
         }
         catch(e){
           console.log(image);
@@ -696,7 +696,7 @@
         return this;
       },
       inView: function(vec){
-        if(vec.x >= this.position.x && vec.x <= this.position.x + this.width && vec.y >= this.position.y && vec.y <= this.position.y + this.height){
+        if(vec.x >= this.position.x && vec.x <= this.position.x + this.width *this.zoomAmt && vec.y >= this.position.y && vec.y <= this.position.y + this.height*this.zoomAmt){
           return true;
         }else{
           return false;

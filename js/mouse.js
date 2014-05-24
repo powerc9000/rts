@@ -11,11 +11,6 @@ module.exports = function(obj, camera){
              obj.mozRequestPointerLock ||
              obj.webkitRequestPointerLock;
              obj.requestPointerLock();
-
-  obj.addEventListener("mousemove", function(e){
-   
-  });
-  
   function getCoords(e){
     try{
        var bounds = obj.getBoundingClientRect();
@@ -63,7 +58,6 @@ module.exports = function(obj, camera){
     }
   });
   obj.addEventListener("mousemove", function(e){
-    var coords = getCoords(e);
     var vec = {x:e.webkitMovementX, y:e.webkitMovementY};
     var scroll = false;
     mousePos = mousePos.add(vec);

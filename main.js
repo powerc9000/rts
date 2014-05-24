@@ -245,7 +245,7 @@ var camera = new $h.Camera(1000, 600);
 var startPoint = {};
 var box = {};
 var draging;
-
+var scroll = true;
 var inputBox = document.createElement("input");
 var minicam = new $h.Camera(200,200);
 var minimap = $h.canvas.create("minimap",200,200, minicam);
@@ -254,13 +254,20 @@ var selectedEntities = {
   units:[],
 };
 var canvasMouse;
-
+var background;
+$h.canvas.create("background", 1000, 600, camera);
+background = $h.canvas("background");
+background.append("#container");
 inputBox = document.body.appendChild(inputBox);
 $h.canvas.create("main", 1000, 600, camera);
 canvasMouse = mouse($h.canvas("main").canvas.canvas, camera);
-$h.canvas("main").append("body");
+$h.canvas("main").append("#container");
 $h.canvas("minimap").append("body");
 $h.canvas("main").canvas.canvas.style.border = "1px black solid";
+background.canvas.canvas.style.position = "absolute";
+background.canvas.canvas.style["z-index"] = -1;
+$h.canvas("main").canvas.canvas.style.position = "aboslute";
+$h.canvas("main").canvas.canvas.style["z-index"] = 2;
 $h.canvas("minimap").canvas.canvas.style.border = "1px black solid";
 entities.push(
   new Entity(10,10, 20, 20, "blue"),
@@ -337,6 +344,7 @@ canvasMouse.listen("leftMouseDown", function(coords, button){
 	draging = true;
 });
 canvasMouse.listen("scroll", function(direction){
+  scroll = true;
   switch(direction){
     case "up":
       camera.move($h.Vector(0,-4));
@@ -424,7 +432,12 @@ $h.render(function(){
   var m = $h.canvas("minimap");
 	c.clear();
   m.clear();
-  drawMap(c, map, camera);
+  if(scroll){
+    background.clear();
+    drawMap(background, map, camera);
+    scroll = false;
+  }
+  
   drawMap(m, map, minicam);
 	entities.forEach(function(dude){
 		dude.render(c);
@@ -1351,11 +1364,6 @@ module.exports = function(obj, camera){
              obj.mozRequestPointerLock ||
              obj.webkitRequestPointerLock;
              obj.requestPointerLock();
-
-  obj.addEventListener("mousemove", function(e){
-   
-  });
-  
   function getCoords(e){
     try{
        var bounds = obj.getBoundingClientRect();
@@ -1403,7 +1411,6 @@ module.exports = function(obj, camera){
     }
   });
   obj.addEventListener("mousemove", function(e){
-    var coords = getCoords(e);
     var vec = {x:e.webkitMovementX, y:e.webkitMovementY};
     var scroll = false;
     mousePos = mousePos.add(vec);

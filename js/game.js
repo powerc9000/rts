@@ -15,21 +15,28 @@ var selectedEntities = {
   units:[],
 };
 var canvasMouse;
+var minimapMouse;
 var background;
+$h.canvas.create("master", 1000, 600, camera);
 $h.canvas.create("background", 1000, 600, camera);
 background = $h.canvas("background");
-background.append("#container");
+//background.append("#container");
 inputBox = document.body.appendChild(inputBox);
 $h.canvas.create("main", 1000, 600, camera);
-canvasMouse = mouse($h.canvas("main").canvas.canvas, camera);
-$h.canvas("main").append("#container");
-$h.canvas("minimap").append("body");
-$h.canvas("main").canvas.canvas.style.border = "1px black solid";
-background.canvas.canvas.style.position = "absolute";
-background.canvas.canvas.style["z-index"] = -1;
-$h.canvas("main").canvas.canvas.style.position = "aboslute";
-$h.canvas("main").canvas.canvas.style["z-index"] = 2;
-$h.canvas("minimap").canvas.canvas.style.border = "1px black solid";
+
+canvasMouse = mouse($h.canvas("master").canvas.canvas, camera);
+minimapMouse = mouse($h.canvas("minimap").canvas.canvas, minicam);
+
+
+$h.canvas("master").append("body");
+//$h.canvas("main").append("#container");
+//$h.canvas("minimap").append("body");
+//$h.canvas("main").canvas.canvas.style.border = "1px black solid";
+//background.canvas.canvas.style.position = "absolute";
+//background.canvas.canvas.style["z-index"] = -1;
+//$h.canvas("main").canvas.canvas.style.position = "aboslute";
+//$h.canvas("main").canvas.canvas.style["z-index"] = 2;
+//$h.canvas("minimap").canvas.canvas.style.border = "1px black solid";
 entities.push(
   new Entity(10,10, 20, 20, "blue"),
   new Entity(40, 40, 20, 20, "green"),
@@ -172,6 +179,24 @@ canvasMouse.listen("mouseUp", function(coords, button){
 	box = {};
 });
 
+minimapMouse.listen("rightmousedown", function(coords, button){
+  //clone selected entities
+  coords = camera.project(coords);
+  var group = selectedEntities.units.slice(0);
+  selectedEntities.units.forEach(function(dude){
+      var g = dude.group;
+      //Remove from old group
+      if(g){
+        g.splice(g.indexOf(dude), 1);
+      }
+
+      dude.target = $h.Vector(coords);
+      dude.moving = true;
+      dude.group = group;
+
+  });
+
+});
 
 document.addEventListener("webkitpointerlockchange", function(e){
   console.log(e);
@@ -189,18 +214,31 @@ $h.update(function(delta){
 minicam.zoomOut(10);
 minicam.moveTo($h.Vector(1000,1000));
 $h.render(function(){
+  var master = $h.canvas("master");
 	var c = $h.canvas("main");
   var m = $h.canvas("minimap");
   var mos = camera.project(canvasMouse.mousePos());
+  var zero;
 	c.clear();
   m.clear();
+  
+  master.clear();
+
   if(scroll){
     background.clear();
     drawMap(background, map, camera);
     scroll = false;
   }
-
+  m.drawRect({
+    width:200,
+    height:200,
+    color:"white",
+    x:0,
+    y:0,
+    camera:false
+  });
   drawMap(m, map, minicam);
+  
 	entities.forEach(function(dude){
 		dude.render(c);
     dude.render(m);
@@ -208,8 +246,11 @@ $h.render(function(){
 	if(draging){
 		c.drawRect(box.width, box.height, box.x, box.y, "rgba(0,128, 0, .2)", {color:"green", width:2});
 	}
-  
-  c.drawImage($h.images("cursor"), mos.x, mos.y);
+  zero = camera.project($h.Vector(0,0));
+  master.drawImage(background.canvas.canvas, zero.x, zero.y);
+  master.drawImage(c.canvas.canvas, zero.x, zero.y);
+  master.drawImage(m.canvas.canvas, zero.x + 800, zero.y + 400);
+  master.drawImage($h.images("cursor"), mos.x, mos.y);
 
 });
 $h.loadImages(

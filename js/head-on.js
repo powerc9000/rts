@@ -542,6 +542,18 @@
       },
       drawRect: function(width, height, x, y, color, stroke, rotation){
         var ctx = this.canvas.ctx, mod = 1, camera = this.canvas.camera;
+        var obj;
+        if(arguments.length === 1 && typeof arguments[0] === "object"){
+          obj = arguments[0];
+          x = obj.x;
+          y = obj.y;
+          width = obj.width;
+          height = obj.height;
+          color = obj.color;
+          stroke = obj.stroke;
+          rotation = obj.rotation;
+        }
+        
         ctx.save();
         ctx.beginPath();
 
@@ -552,7 +564,12 @@
         }
         else{
           //console.log(camera.position.x)
-          ctx.rect((x - camera.position.x)/camera.zoomAmt , (y - camera.position.y)/camera.zoomAmt , width / camera.zoomAmt, height / camera.zoomAmt);
+          if(obj && obj.camera === false){
+            ctx.rect(x, y, width, height);
+          }else{
+            ctx.rect((x - camera.position.x)/camera.zoomAmt , (y - camera.position.y)/camera.zoomAmt , width / camera.zoomAmt, height / camera.zoomAmt);
+          }
+          
         }
         if(color){
           ctx.fillStyle = color;

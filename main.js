@@ -256,6 +256,7 @@ var selectedEntities = {
 var canvasMouse;
 var minimapMouse;
 var background;
+var minimapClick;
 $h.canvas.create("master", 1000, 600, camera);
 $h.canvas.create("background", 1000, 600, camera);
 background = $h.canvas("background");
@@ -353,7 +354,13 @@ canvasMouse.listen("rightMouseDown", function(coords, button){
 });
 //camera.zoomIn(2);
 canvasMouse.listen("leftMouseDown", function(coords, button){
-  coords = camera.project(coords);
+  if($h.collides({position:coords, width:1, height:1, angle:0}, {position:$h.Vector(800,400), width:200, height:200, angle:0})){
+    camera.moveTo(minicam.project($h.Vector(coords.x - 800, coords.y - 400)));
+    minimapClick = true;
+  }else{
+    coords = camera.project(coords);
+    minimapClick = false;
+  }
 	startPoint = coords;
 	draging = true;
 });
@@ -411,7 +418,7 @@ canvasMouse.listen("drag", function(coords){
 });
 canvasMouse.listen("mouseUp", function(coords, button){
   coords = camera.project(coords);
-	if(button === 1){
+	if(button === 1 && !minimapClick){
 		selectEntitiesInSelection(box);
     if(!selectedEntities.units.length){
       entities.forEach(function(dude){

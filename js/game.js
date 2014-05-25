@@ -191,6 +191,7 @@ minicam.moveTo($h.Vector(1000,1000));
 $h.render(function(){
 	var c = $h.canvas("main");
   var m = $h.canvas("minimap");
+  var mos = camera.project(canvasMouse.mousePos());
 	c.clear();
   m.clear();
   if(scroll){
@@ -198,7 +199,7 @@ $h.render(function(){
     drawMap(background, map, camera);
     scroll = false;
   }
-  
+
   drawMap(m, map, minicam);
 	entities.forEach(function(dude){
 		dude.render(c);
@@ -207,11 +208,15 @@ $h.render(function(){
 	if(draging){
 		c.drawRect(box.width, box.height, box.x, box.y, "rgba(0,128, 0, .2)", {color:"green", width:2});
 	}
-  var m = camera.project(canvasMouse.mousePos());
-  c.drawRect(5,5, m.x, m.y, "blue");
+  
+  c.drawImage($h.images("cursor"), mos.x, mos.y);
 
 });
-//$h.loadImages();
+$h.loadImages(
+  [
+    {name:"cursor", src:"img/cursor.png"}
+  ]
+);
 $h.run();
 
 

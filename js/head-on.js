@@ -580,8 +580,10 @@
       },
       drawImage: function(image,x,y){
         var ctx = this.canvas.ctx;
+        var camera = this.canvas.camera;
+        var coords = camera.unproject(headOn.Vector(x,y));
         try{
-          ctx.drawImage(image,x,y);
+          ctx.drawImage(image,coords.x,coords.y);
         }
         catch(e){
           console.log(image);

@@ -328,8 +328,15 @@ inputBox.addEventListener("change", function(e){
 });
 canvasMouse.listen("rightMouseDown", function(coords, button){
   //clone selected entities
-  coords = camera.project(coords);
+  
   var group = selectedEntities.units.slice(0);
+  //console.log(ocoords);
+  if($h.collides({position:coords, width:1, height:1, angle:0}, {position:$h.Vector(800,400), width:200, height:200, angle:0})){
+    coords = minicam.project($h.Vector(coords.x - 800, coords.y - 400));
+  }else{
+    coords = camera.project(coords);
+  }
+  
 	selectedEntities.units.forEach(function(dude){
       var g = dude.group;
       //Remove from old group
@@ -352,29 +359,31 @@ canvasMouse.listen("leftMouseDown", function(coords, button){
 });
 canvasMouse.listen("scroll", function(direction){
   scroll = true;
+  var scrollx  = 10;
+  var scrolly = 10;
   switch(direction){
     case "up":
-      camera.move($h.Vector(0,-4));
+      camera.move($h.Vector(0,-scrolly));
       if(camera.position.y < 0){
-        camera.move($h.Vector(0,4));
+        camera.move($h.Vector(0,scrolly));
       }
       break;
     case "down":
-      camera.move($h.Vector(0,4));
+      camera.move($h.Vector(0,scrolly));
       if(camera.position.y + camera.height > map.height){
-        camera.move($h.Vector(0,-4));
+        camera.move($h.Vector(0,-scrolly));
       }
       break;
     case "left":
-      camera.move($h.Vector(-4,0));
+      camera.move($h.Vector(-scrollx,0));
       if(camera.position.x < 0){
-        camera.move($h.Vector(4,0));
+        camera.move($h.Vector(scrollx,0));
       }
       break;
     case "right":
-      camera.move($h.Vector(4,0));
+      camera.move($h.Vector(scrollx,0));
       if(camera.position.x + camera.width > map.width){
-        camera.move($h.Vector(-4,0));
+        camera.move($h.Vector(-scrollx,0));
       }
       break;
 
@@ -418,24 +427,6 @@ canvasMouse.listen("mouseUp", function(coords, button){
 	box = {};
 });
 
-minimapMouse.listen("rightmousedown", function(coords, button){
-  //clone selected entities
-  coords = camera.project(coords);
-  var group = selectedEntities.units.slice(0);
-  selectedEntities.units.forEach(function(dude){
-      var g = dude.group;
-      //Remove from old group
-      if(g){
-        g.splice(g.indexOf(dude), 1);
-      }
-
-      dude.target = $h.Vector(coords);
-      dude.moving = true;
-      dude.group = group;
-
-  });
-
-});
 
 document.addEventListener("webkitpointerlockchange", function(e){
   console.log(e);
@@ -477,7 +468,7 @@ $h.render(function(){
     camera:false
   });
   drawMap(m, map, minicam);
-  
+  m.drawRect(camera.width, camera.height, camera.position.x, camera.position.y, "transparent", {width:2, color:"black"});
 	entities.forEach(function(dude){
 		dude.render(c);
     dude.render(m);
@@ -1346,7 +1337,7 @@ function genMap(width, height, tileW, tileH){
         this.center = vec;
       },
       project: function(vec){
-        return vec.add(this.position);
+        return vec.mul(this.zoomAmt).add(this.position);
       },
       unproject: function(vec){
         return vec.sub(this.position);

@@ -726,7 +726,7 @@
         this.center = vec;
       },
       project: function(vec){
-        return vec.add(this.position);
+        return vec.mul(this.zoomAmt).add(this.position);
       },
       unproject: function(vec){
         return vec.sub(this.position);

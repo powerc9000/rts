@@ -76,8 +76,14 @@ module.exports = (function(){
         canvas.drawLine(this.position, this.target, "black");
       }
       canvas.drawRect(this.width, this.height, this.position.x - this.width/2, this.position.y - this.width/2, this.color, stroke);
-      canvas.drawCircle(this.position.x, this.position.y, $h.variable.NEIGHBOR_RADIUS, "transparent", {width:1, color:this.color});
-      canvas.drawLine(this.position, this.position.add(this.velocity), "red");
+      if($h.variable.DEBUG){
+        canvas.drawCircle(this.position.x, this.position.y, $h.variable.NEIGHBOR_RADIUS, "transparent", {width:1, color:this.color});
+        canvas.drawLine(this.position, this.position.add(this.velocity), "red");
+      }
+      
+    },
+    minimapRender: function(canvas){
+      canvas.drawRect(this.width, this.height, this.position.x - this.width/2, this.position.y - this.width/2, "black");
     },
     flock: function(){
       return this.alignment().add(this.separation()).add(this.cohesion());

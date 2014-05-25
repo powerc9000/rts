@@ -8,6 +8,7 @@ var box = {};
 var draging;
 var scroll = true;
 var inputBox = document.createElement("input");
+var checkbox = document.createElement("input");
 var minicam = new $h.Camera(200,200);
 var minimap = $h.canvas.create("minimap",200,200, minicam);
 var entities = [];
@@ -23,6 +24,8 @@ $h.canvas.create("background", 1000, 600, camera);
 background = $h.canvas("background");
 //background.append("#container");
 inputBox = document.body.appendChild(inputBox);
+checkbox = document.body.appendChild(checkbox);
+checkbox.type = "checkbox";
 $h.canvas.create("main", 1000, 600, camera);
 
 canvasMouse = mouse($h.canvas("master").canvas.canvas, camera);
@@ -87,6 +90,9 @@ $h.variable = {
 inputBox.value = 40;
 inputBox.addEventListener("change", function(e){
   $h.variable.NEIGHBOR_RADIUS = parseInt(this.value, 10);
+});
+checkbox.addEventListener("change", function(e){
+  $h.variable.DEBUG = this.checked;
 });
 canvasMouse.listen("rightMouseDown", function(coords, button){
   //clone selected entities
@@ -239,7 +245,7 @@ $h.render(function(){
   m.drawRect(camera.width, camera.height, camera.position.x, camera.position.y, "transparent", {width:2, color:"black"});
 	entities.forEach(function(dude){
 		dude.render(c);
-    dude.render(m);
+    dude.minimapRender(m);
 	});
 	if(draging){
 		c.drawRect(box.width, box.height, box.x, box.y, "rgba(0,128, 0, .2)", {color:"green", width:2});

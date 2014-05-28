@@ -332,6 +332,18 @@ var gamePlay = {
       camera:false
     });
     drawMap(m, map, minicam);
+    m.drawRect({
+      x:0,
+      y:0,
+      width:200,
+      height:200,
+      camera:false,
+      color:"transparent",
+      stroke:{
+        width:4,
+        color:"black"
+      }
+    });
     m.drawRect(camera.width, camera.height, camera.position.x, camera.position.y, "transparent", {width:2, color:"black"});
     entities.forEach(function(dude){
       dude.render(c);
@@ -567,18 +579,7 @@ $h.render(function(){
   master.drawImage(background.canvas.canvas, zero.x, zero.y);
   master.drawImage(c.canvas.canvas, zero.x, zero.y);
   master.drawImage(m.canvas.canvas, zero.x + 800, zero.y + 400);
-  master.drawRect({
-    x:799,
-    y:399,
-    width:200,
-    height:200,
-    camera:false,
-    color:"transparent",
-    stroke:{
-      width:4,
-      color:"black"
-    }
-  });
+  
   master.drawImage($h.images("cursor"), mos.x, mos.y);
 
 });

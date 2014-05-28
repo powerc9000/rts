@@ -247,7 +247,7 @@ var $h = require("./head-on");
 var Entity = require("./entity");
 var mouse = require("./mouse");
 var camera = new $h.Camera(1000, 600);
-
+var keys = require("./keys");
 var startPoint = {};
 var box = {};
 var draging;
@@ -273,6 +273,7 @@ var gameState = {
   changeState: function(state){
     if(this.state){
       this.state.exit();
+      this.pState = this.state;
     }
     this.state = state;
     this.state.enter();
@@ -281,7 +282,7 @@ var gameState = {
     this.state.update(this, delta);
   },
   render: function(){
-    this.state.render();
+    this.state.render(this);
   }
 };
 var loadState = {
@@ -312,6 +313,9 @@ var gamePlay = {
     entities.forEach(function(dude){
       dude.update(delta);
     });
+    if($h.paused){
+      entity.changeState(pausedState);
+    }
     var scrollx  = 10;
     var scrolly = 10;
     if(scroll){
@@ -396,8 +400,34 @@ var gamePlay = {
     drawMap(background, map, camera);
   }
 };
+var pausedState = {
+  update:function(entity, delta){
+    if(!$h.paused){
+      entity.changeState(gamePlay);
+    }
+  },
+  render: function(entity){
+  },
+  enter:function(){
+    var fg = $h.canvas("foreground");
+    fg.drawRect({
+      width:fg.width,
+      height:fg.height,
+      x:0,
+      y:0,
+      camera:false,
+      color:"rgba(0,0,0,.9)"
+    });
+    fg.drawText("paused", fg.width/2, fg.height/2, false, "white", "center");
+  },
+  exit:function(){
+    var fg = $h.canvas("foreground");
+    fg.clear();
+  }
+};
 $h.canvas.create("master", 1000, 600, camera);
 $h.canvas.create("background", 1000, 600, camera);
+$h.canvas.create("foreground", 1000, 600, camera);
 background = $h.canvas("background");
 //background.append("#container");
 inputBox = document.body.appendChild(inputBox);
@@ -471,6 +501,9 @@ inputBox.addEventListener("change", function(e){
 checkbox.addEventListener("change", function(e){
   $h.variable.DEBUG = this.checked;
 });
+window.addEventListener("blur", function(){
+  $h.pause();
+});
 canvasMouse.listen("rightMouseDown", function(coords, button){
   //clone selected entities
   
@@ -528,7 +561,6 @@ canvasMouse.listen("leftMouseDown", function(coords, button){
 	draging = true;
 });
 canvasMouse.listen("scroll", function(direction){
-  console.log("move");
   if(direction){
     scroll = true;
   }else{
@@ -589,6 +621,7 @@ $h.render(function(){
   var master = $h.canvas("master");
   var c = $h.canvas("main");
   var m = $h.canvas("minimap");
+  var fg = $h.canvas("foreground");
   var mos = camera.project(canvasMouse.mousePos());
   var zero;
 	gameState.render();
@@ -597,7 +630,7 @@ $h.render(function(){
   master.drawImage(background.canvas.canvas, zero.x, zero.y);
   master.drawImage(c.canvas.canvas, zero.x, zero.y);
   master.drawImage(m.canvas.canvas, zero.x + 800, zero.y + 400);
-  
+  master.drawImage(fg.canvas.canvas, zero.x, zero.y);
   master.drawImage($h.images("cursor"), mos.x, mos.y);
 
 });
@@ -737,7 +770,7 @@ function genMap(width, height, tileW, tileH){
   return map;
 }
 
-},{"./entity":1,"./head-on":3,"./mouse":4}],3:[function(require,module,exports){
+},{"./entity":1,"./head-on":3,"./keys":4,"./mouse":5}],3:[function(require,module,exports){
 //     __  __         __           _
 //    / / / /__  ____ _____/ /  ____  ____         (_)____
 //   / /_/ / _ \/ __ `/ __  /_____/ __ \/ __ \    / / ___/
@@ -1558,6 +1591,22 @@ function genMap(width, height, tileW, tileH){
 })(window);
 
 },{}],4:[function(require,module,exports){
+var $h = require("./head-on");
+$h.keys = {};
+addEventListener("keydown", function(e){
+  $h.keys[String.fromCharCode(e.which).toLowerCase()] = true;
+});
+addEventListener("keyup", function(e){
+  if(e.which === 80){
+    if($h.isPaused()){
+      $h.unpause();
+    }
+    else{
+      $h.pause();
+    }
+  }
+});
+},{"./head-on":3}],5:[function(require,module,exports){
 //Setup event listeners for the mouse
 var $h = require("./head-on");
 module.exports = function(obj, camera){

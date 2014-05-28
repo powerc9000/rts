@@ -19,6 +19,85 @@ var canvasMouse;
 var minimapMouse;
 var background;
 var minimapClick;
+var percent;
+var gameState = {
+  init: function(){
+    this.state = loadState;
+  },
+  changeState: function(state){
+    this.state = state;
+  },
+  update: function(delta){
+    this.state.update(this, delta);
+  },
+  render: function(){
+    this.state.render();
+  }
+};
+var loadState = {
+  update: function(entity){
+    if($h.imagesLoaded){
+      setTimeout(function(){
+        entity.changeState(gamePlay); 
+      },2000);
+         
+    }
+  },
+  render:function(){
+    background.clear();
+    background.drawRect({
+      x:0,
+      y:0,
+      width:background.width,
+      height:background.height,
+      color:"purple",
+      camera:false
+    });
+    background.drawText("Loading: "+(percent*100)+"%", background.width/2, background.height/2, false, "white", "center");
+  },
+  exit:function(){}
+};
+var gamePlay = {
+  update: function(entity, delta){
+    entities.forEach(function(dude){
+      dude.update(delta);
+    });
+  },
+  render:function(){
+    var c = $h.canvas("main");
+    var m = $h.canvas("minimap");
+    var mos = camera.project(canvasMouse.mousePos());
+    var zero;
+    c.clear();
+    m.clear();
+    
+    
+
+    if(scroll || minimapClick){
+      background.clear();
+      drawMap(background, map, camera);
+      scroll = false;
+    }
+    m.drawRect({
+      width:200,
+      height:200,
+      color:"white",
+      x:0,
+      y:0,
+      camera:false
+    });
+    drawMap(m, map, minicam);
+    m.drawRect(camera.width, camera.height, camera.position.x, camera.position.y, "transparent", {width:2, color:"black"});
+    entities.forEach(function(dude){
+      dude.render(c);
+      dude.minimapRender(m);
+    });
+    if(draging){
+      c.drawRect(box.width, box.height, box.x, box.y, "rgba(0,128, 0, .2)", {color:"green", width:2});
+    }
+  },
+  exit:function(){}
+};
 $h.canvas.create("master", 1000, 600, camera);
 $h.canvas.create("background", 1000, 600, camera);
 background = $h.canvas("background");
@@ -121,8 +200,29 @@ canvasMouse.listen("rightMouseDown", function(coords, button){
 });
 //camera.zoomIn(2);
 canvasMouse.listen("leftMouseDown", function(coords, button){
+  var c;
+  var cpy;
   if($h.collides({position:coords, width:1, height:1, angle:0}, {position:$h.Vector(800,400), width:200, height:200, angle:0})){
-    camera.moveTo(minicam.project($h.Vector(coords.x - 800, coords.y - 400)));
+    c = minicam.project($h.Vector(coords.x - 800, coords.y - 400));
+    //Get the top left of where the camera would be in I clicked there.
+    //Camera.moveTo moves the center of the camera to where you clicked
+    //We want to bounds check on the top left and bottom right
+    console.log(c);
+    cpy = c.sub($h.Vector(camera.width/2, camera.height/2));
+    console.log(cpy, camera);
+    if(cpy.x + camera.width > map.width){
+      console.log("hey");
+      c.x = map.width - (camera.width/2);
+    }else if(cpy.x < 0){
+      c.x = (camera.width/2);
+
+    }
+    if(cpy.y + camera.height > map.height){
+      c.y = map.height - (camera.height/2);
+    }else if(cpy.y < 0){
+      c.y = (camera.height/2);
+    }
+    camera.moveTo(c);
     minimapClick = true;
   }else{
     coords = camera.project(coords);
@@ -208,49 +308,19 @@ document.addEventListener("webkitpointerlockchange", function(e){
 
 
 $h.update(function(delta){
-
-
-	entities.forEach(function(dude){
-    dude.update(delta);
-  });
-
+  gameState.update(delta);
 });
 minicam.zoomOut(10);
 minicam.moveTo($h.Vector(1000,1000));
 $h.render(function(){
   var master = $h.canvas("master");
-	var c = $h.canvas("main");
+  var c = $h.canvas("main");
   var m = $h.canvas("minimap");
   var mos = camera.project(canvasMouse.mousePos());
   var zero;
-	c.clear();
-  m.clear();
-  
-  master.clear();
-
-  if(scroll){
-    background.clear();
-    drawMap(background, map, camera);
-    scroll = false;
-  }
-  m.drawRect({
-    width:200,
-    height:200,
-    color:"white",
-    x:0,
-    y:0,
-    camera:false
-  });
-  drawMap(m, map, minicam);
-  m.drawRect(camera.width, camera.height, camera.position.x, camera.position.y, "transparent", {width:2, color:"black"});
-	entities.forEach(function(dude){
-		dude.render(c);
-    dude.minimapRender(m);
-	});
-	if(draging){
-		c.drawRect(box.width, box.height, box.x, box.y, "rgba(0,128, 0, .2)", {color:"green", width:2});
-	}
+	gameState.render();
   zero = camera.project($h.Vector(0,0));
+  master.clear();
   master.drawImage(background.canvas.canvas, zero.x, zero.y);
   master.drawImage(c.canvas.canvas, zero.x, zero.y);
   master.drawImage(m.canvas.canvas, zero.x + 800, zero.y + 400);
@@ -259,9 +329,14 @@ $h.render(function(){
 });
 $h.loadImages(
   [
-    {name:"cursor", src:"img/cursor.png"}
-  ]
-);
+    {name:"cursor", src:"img/cursor.png"},
+    
+
+  ],
+  function(loaded, total){
+  percent = loaded/total;
+});
+gameState.init();
 $h.run();
 
 

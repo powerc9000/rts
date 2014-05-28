@@ -48,6 +48,10 @@
 
           }
         },
+        FSM: function(entity){
+          this.entity = entity;
+          return this;
+        },
         Camera: function(width, height, x, y, zoom){
           this.width = width;
           this.height = height;
@@ -400,7 +404,7 @@
           return this.groups[groupName];
         },
 
-        loadImages: function(imageArray, imgCallback, allCallback){
+        loadImages: function(imageArray, progress, allCallback){
           var args, img, total, loaded, timeout, interval, that, cb, imgOnload;
           that = this;
           this.imagesLoaded = false;
@@ -411,7 +415,7 @@
           loaded = 0;
           imgOnload = function(){
             loaded += 1;
-            imgCallback && imgCallback(image.name);
+            progress && progress(loaded, total);
             if(loaded === total){
               allCallback && allCallback();
               that.imagesLoaded = true;
@@ -672,6 +676,24 @@
         this.canvas.camera = cam;
       }
     };
+    headOn.FSM.prototype = {
+      changeState: function(state){
+        if(this.state){
+          this.state.exit();
+        }
+           
+        this.state = state;
+        this.state.enter();
+      },
+      update: function(){
+        var args = [].slice.call(arguments, 0);
+        args.unshift(this.entity);
+        this.state.execute.apply(null, args);  
+      },
+      setState: function(state){
+        this.state = state;
+      }
+    },
     headOn.Timer.prototype = {
       job: function(time, start){
         var jiff = {

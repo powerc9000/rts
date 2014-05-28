@@ -11,6 +11,7 @@ var inputBox = document.createElement("input");
 var checkbox = document.createElement("input");
 var minicam = new $h.Camera(200,200);
 var minimap = $h.canvas.create("minimap",200,200, minicam);
+var minimapBG = $h.canvas.create("minibg", 200,200, minicam);
 var entities = [];
 var selectedEntities = {
   units:[],
@@ -127,7 +128,8 @@ var gamePlay = {
       y:0,
       camera:false
     });
-    drawMap(m, map, minicam);
+    //drawMap(m, map, minicam);
+    m.drawImage($h.canvas("minibg").canvas.canvas, 0,0);
     m.drawRect({
       x:0,
       y:0,
@@ -189,7 +191,7 @@ inputBox = document.body.appendChild(inputBox);
 checkbox = document.body.appendChild(checkbox);
 checkbox.type = "checkbox";
 $h.canvas.create("main", 1000, 600, camera);
-
+drawMap($h.canvas("minibg"), map, minicam);
 canvasMouse = mouse($h.canvas("master").canvas.canvas, camera);
 minimapMouse = mouse($h.canvas("minimap").canvas.canvas, minicam);
 

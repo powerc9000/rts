@@ -26,7 +26,11 @@ var gameState = {
     this.state = loadState;
   },
   changeState: function(state){
+    if(this.state){
+      this.state.exit();
+    }
     this.state = state;
+    this.state.enter();
   },
   update: function(delta){
     this.state.update(this, delta);
@@ -141,7 +145,11 @@ var gamePlay = {
       c.drawRect(box.width, box.height, box.x, box.y, "rgba(0,128, 0, .2)", {color:"green", width:2});
     }
   },
-  exit:function(){}
+  exit:function(){},
+  enter: function(){
+    background.clear();
+    drawMap(background, map, camera);
+  }
 };
 $h.canvas.create("master", 1000, 600, camera);
 $h.canvas.create("background", 1000, 600, camera);

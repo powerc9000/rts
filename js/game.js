@@ -20,6 +20,7 @@ var minimapMouse;
 var background;
 var minimapClick;
 var percent;
+var scrollDirection;
 var gameState = {
   init: function(){
     this.state = loadState;
@@ -62,6 +63,38 @@ var gamePlay = {
     entities.forEach(function(dude){
       dude.update(delta);
     });
+    var scrollx  = 10;
+    var scrolly = 10;
+    if(scroll){
+      switch(scrollDirection){
+        case "up":
+          camera.move($h.Vector(0,-scrolly));
+          if(camera.position.y < 0){
+            camera.move($h.Vector(0,scrolly));
+          }
+          break;
+        case "down":
+          camera.move($h.Vector(0,scrolly));
+          if(camera.position.y + camera.height > map.height){
+            camera.move($h.Vector(0,-scrolly));
+          }
+          break;
+        case "left":
+          camera.move($h.Vector(-scrollx,0));
+          if(camera.position.x < 0){
+            camera.move($h.Vector(scrollx,0));
+          }
+          break;
+        case "right":
+          camera.move($h.Vector(scrollx,0));
+          if(camera.position.x + camera.width > map.width){
+            camera.move($h.Vector(-scrollx,0));
+          }
+          break;
+
+      }
+    }
+   
   },
   render:function(){
     var c = $h.canvas("main");
@@ -76,7 +109,7 @@ var gamePlay = {
     if(scroll || minimapClick){
       background.clear();
       drawMap(background, map, camera);
-      scroll = false;
+      //scroll = false;
     }
     m.drawRect({
       width:200,
@@ -242,36 +275,13 @@ canvasMouse.listen("leftMouseDown", function(coords, button){
 	draging = true;
 });
 canvasMouse.listen("scroll", function(direction){
-  scroll = true;
-  var scrollx  = 10;
-  var scrolly = 10;
-  switch(direction){
-    case "up":
-      camera.move($h.Vector(0,-scrolly));
-      if(camera.position.y < 0){
-        camera.move($h.Vector(0,scrolly));
-      }
-      break;
-    case "down":
-      camera.move($h.Vector(0,scrolly));
-      if(camera.position.y + camera.height > map.height){
-        camera.move($h.Vector(0,-scrolly));
-      }
-      break;
-    case "left":
-      camera.move($h.Vector(-scrollx,0));
-      if(camera.position.x < 0){
-        camera.move($h.Vector(scrollx,0));
-      }
-      break;
-    case "right":
-      camera.move($h.Vector(scrollx,0));
-      if(camera.position.x + camera.width > map.width){
-        camera.move($h.Vector(-scrollx,0));
-      }
-      break;
-
+  console.log("move");
+  if(direction){
+    scroll = true;
+  }else{
+    scroll = false; 
   }
+  scrollDirection = direction;
 });
 canvasMouse.listen("drag", function(coords){
   coords = camera.project(coords);

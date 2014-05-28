@@ -57,9 +57,9 @@ module.exports = function(obj, camera){
       listeners.mouseup.call(null, mousePos, button);
     }
   });
+  var scroll = false;
   obj.addEventListener("mousemove", function(e){
     var vec = {x:e.webkitMovementX, y:e.webkitMovementY};
-    var scroll = false;
     mousePos = mousePos.add(vec);
     if(mousePos.x > obj.width-5){
       scroll = "right";
@@ -69,14 +69,16 @@ module.exports = function(obj, camera){
       scroll = "left";
       mousePos.x = 0;
     }
-    if(mousePos.y > obj.height -5){
+    else if(mousePos.y > obj.height -5){
       scroll = "down";
       mousePos.y = obj.height -5;
     }else if(mousePos.y < 0){
       scroll = "up";
       mousePos.y = 0;
+    }else{
+      scroll = false;
     }
-    if(scroll && listeners.scroll){
+    if(listeners.scroll){
       listeners.scroll.call(null, scroll);
     }
     if(listeners.mousemove){

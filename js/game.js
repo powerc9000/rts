@@ -207,9 +207,7 @@ canvasMouse.listen("leftMouseDown", function(coords, button){
     //Get the top left of where the camera would be in I clicked there.
     //Camera.moveTo moves the center of the camera to where you clicked
     //We want to bounds check on the top left and bottom right
-    console.log(c);
     cpy = c.sub($h.Vector(camera.width/2, camera.height/2));
-    console.log(cpy, camera);
     if(cpy.x + camera.width > map.width){
       console.log("hey");
       c.x = map.width - (camera.width/2);
@@ -324,6 +322,18 @@ $h.render(function(){
   master.drawImage(background.canvas.canvas, zero.x, zero.y);
   master.drawImage(c.canvas.canvas, zero.x, zero.y);
   master.drawImage(m.canvas.canvas, zero.x + 800, zero.y + 400);
+  master.drawRect({
+    x:799,
+    y:399,
+    width:200,
+    height:200,
+    camera:false,
+    color:"transparent",
+    stroke:{
+      width:4,
+      color:"black"
+    }
+  });
   master.drawImage($h.images("cursor"), mos.x, mos.y);
 
 });
@@ -411,6 +421,10 @@ function clone(obj) {
 }
 
 function drawMap(canvas, map, camera){
+  var tileColor ={
+    1:"#777CC9",
+    0:"#8045BF"
+  };
   var tiles = map.map;
   var topleft = {x:0,y:0};
   var topright = {x:0,y:0};
@@ -422,7 +436,7 @@ function drawMap(canvas, map, camera){
     botleft.y = y*map.tileHeight + map.tileHeight;
     botright.y = botleft.y;
     for(var x = 0; x<tiles[y].length; x++){
-      if(tiles[y][x] === 0){
+      if(tiles[y][x] === 0 || tiles[y][x] === 1){
         topleft.x = x*map.tileWidth;
         topright.x = x*map.tileWidth + map.tileWidth;
         botleft.x = topleft.x;
@@ -432,7 +446,7 @@ function drawMap(canvas, map, camera){
             camera.inView(botleft) ||
             camera.inView(botright)
             ){
-            canvas.drawRect(map.tileWidth, map.tileHeight, x*map.tileWidth, y*map.tileHeight, "purple");
+            canvas.drawRect(map.tileWidth, map.tileHeight, x*map.tileWidth, y*map.tileHeight, tileColor[tiles[y][x]]);
           }
       }
     }
@@ -446,11 +460,13 @@ function genMap(width, height, tileW, tileH){
   for(var y = 0; y < rows; y++){
     map[y] = [];
     for(var x = 0; x < cols; x++){
-      var rand = $h.randInt(0,20);
-      if(rand > 5){
+      var rand = $h.randInt(0,100);
+      if(rand > 20){
         map[y][x] = 0;
-      }else{
+      }else if(rand > 5){
         map[y][x] = 1;
+      }else{
+        map[y][x] = 2;
       }
     }
   }

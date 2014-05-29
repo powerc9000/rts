@@ -493,7 +493,7 @@ $h.render(function(){
   master.drawImage(c.canvas.canvas, zero.x, zero.y);
   master.drawImage(m.canvas.canvas, zero.x + 800, zero.y + 400);
   master.drawImage(fg.canvas.canvas, zero.x, zero.y);
-  master.drawImage($h.images("cursor"), mos.x, mos.y);
+  
 
 });
 $h.loadImages(
@@ -664,6 +664,7 @@ exports.gamePlay = {
     var mos = camera.project($h.gamestate.canvasMouse.mousePos());
     var zero;
     var background = $h.canvas("background");
+    var fg = $h.canvas("foreground");
     c.clear();
     m.clear();
     
@@ -704,6 +705,8 @@ exports.gamePlay = {
     if($h.gamestate.draging){
       c.drawRect($h.gamestate.box.width, $h.gamestate.box.height, $h.gamestate.box.x, $h.gamestate.box.y, "rgba(0,128, 0, .2)", {color:"green", width:2});
     }
+    fg.clear();
+    fg.drawImage($h.images("cursor"), mos.x, mos.y);
   },
   exit:function(){},
   enter: function(){
@@ -1708,23 +1711,21 @@ module.exports = function(obj, camera){
     if(paused) return;
     var vec = {x:e.webkitMovementX, y:e.webkitMovementY};
     mousePos = mousePos.add(vec);
-    if(mousePos.x > obj.width-5){
+    if(mousePos.x > obj.width-10){
       scroll = "right";
-      mousePos.x = obj.width-5 ;
     }
-    else if(mousePos.x < 0){
+    else if(mousePos.x < 10){
       scroll = "left";
-      mousePos.x = 0;
     }
-    else if(mousePos.y > obj.height -5){
+    else if(mousePos.y > obj.height -10){
       scroll = "down";
-      mousePos.y = obj.height -5;
-    }else if(mousePos.y < 0){
+    }else if(mousePos.y < 10){
       scroll = "up";
-      mousePos.y = 0;
+      
     }else{
       scroll = false;
     }
+    keepMouseInBounds();
     if(listeners.scroll){
       listeners.scroll.call(null, scroll);
     }
@@ -1751,6 +1752,20 @@ module.exports = function(obj, camera){
       paused = false;
     }
   };
+  function keepMouseInBounds(){
+    if(mousePos.x > obj.width){
+      mousePos.x = obj.width;
+    }
+    if(mousePos.y > obj.height){
+      mousePos.y = obj.height;
+    }
+    if(mousePos.x < 0){
+      mousePos.x = 0;
+    }
+    if(mousePos.y < 0){
+      mousePos.y = 0;
+    }
+  }
 
 };
 

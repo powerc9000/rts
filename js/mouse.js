@@ -65,23 +65,21 @@ module.exports = function(obj, camera){
     if(paused) return;
     var vec = {x:e.webkitMovementX, y:e.webkitMovementY};
     mousePos = mousePos.add(vec);
-    if(mousePos.x > obj.width-5){
+    if(mousePos.x > obj.width-10){
       scroll = "right";
-      mousePos.x = obj.width-5 ;
     }
-    else if(mousePos.x < 0){
+    else if(mousePos.x < 10){
       scroll = "left";
-      mousePos.x = 0;
     }
-    else if(mousePos.y > obj.height -5){
+    else if(mousePos.y > obj.height -10){
       scroll = "down";
-      mousePos.y = obj.height -5;
-    }else if(mousePos.y < 0){
+    }else if(mousePos.y < 10){
       scroll = "up";
-      mousePos.y = 0;
+      
     }else{
       scroll = false;
     }
+    keepMouseInBounds();
     if(listeners.scroll){
       listeners.scroll.call(null, scroll);
     }
@@ -108,5 +106,19 @@ module.exports = function(obj, camera){
       paused = false;
     }
   };
+  function keepMouseInBounds(){
+    if(mousePos.x > obj.width){
+      mousePos.x = obj.width;
+    }
+    if(mousePos.y > obj.height){
+      mousePos.y = obj.height;
+    }
+    if(mousePos.x < 0){
+      mousePos.x = 0;
+    }
+    if(mousePos.y < 0){
+      mousePos.y = 0;
+    }
+  }
 
 };

@@ -79,6 +79,7 @@ exports.gamePlay = {
     var mos = camera.project($h.gamestate.canvasMouse.mousePos());
     var zero;
     var background = $h.canvas("background");
+    var fg = $h.canvas("foreground");
     c.clear();
     m.clear();
     
@@ -119,6 +120,8 @@ exports.gamePlay = {
     if($h.gamestate.draging){
       c.drawRect($h.gamestate.box.width, $h.gamestate.box.height, $h.gamestate.box.x, $h.gamestate.box.y, "rgba(0,128, 0, .2)", {color:"green", width:2});
     }
+    fg.clear();
+    fg.drawImage($h.images("cursor"), mos.x, mos.y);
   },
   exit:function(){},
   enter: function(){

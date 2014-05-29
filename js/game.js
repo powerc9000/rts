@@ -248,7 +248,7 @@ $h.render(function(){
   master.drawImage(c.canvas.canvas, zero.x, zero.y);
   master.drawImage(m.canvas.canvas, zero.x + 800, zero.y + 400);
   master.drawImage(fg.canvas.canvas, zero.x, zero.y);
-  master.drawImage($h.images("cursor"), mos.x, mos.y);
+  
 
 });
 $h.loadImages(

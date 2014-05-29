@@ -256,6 +256,7 @@ var inputBox = document.createElement("input");
 var checkbox = document.createElement("input");
 var minicam = new $h.Camera(200,200);
 var minimap = $h.canvas.create("minimap",200,200, minicam);
+var minimapBG = $h.canvas.create("minibg", 200,200, minicam);
 var entities = [];
 var selectedEntities = {
   units:[],
@@ -266,6 +267,13 @@ var background;
 var minimapClick;
 var percent;
 var scrollDirection;
+var map = {
+  width:2000,
+  height:2000,
+  tileWidth:20,
+  tileHeight:20,
+  map:genMap(2000,2000,20,20)
+};
 var gameState = {
   init: function(){
     this.state = loadState;
@@ -372,7 +380,8 @@ var gamePlay = {
       y:0,
       camera:false
     });
-    drawMap(m, map, minicam);
+    //drawMap(m, map, minicam);
+    m.drawImage($h.canvas("minibg").canvas.canvas, 0,0);
     m.drawRect({
       x:0,
       y:0,
@@ -434,7 +443,6 @@ inputBox = document.body.appendChild(inputBox);
 checkbox = document.body.appendChild(checkbox);
 checkbox.type = "checkbox";
 $h.canvas.create("main", 1000, 600, camera);
-
 canvasMouse = mouse($h.canvas("master").canvas.canvas, camera);
 minimapMouse = mouse($h.canvas("minimap").canvas.canvas, minicam);
 
@@ -482,13 +490,7 @@ entities.push(
   new Entity(70, 150, 20, 20, "grey")
 );
 entities[2].max_velocity = 300;
-var map = {
-  width:2000,
-  height:2000,
-  tileWidth:20,
-  tileHeight:20,
-  map:genMap(2000,2000,20,20)
-};
+
 $h.gamestate = {units:entities};
 $h.variable = {
   SEPARATION_CONST: 70,
@@ -617,6 +619,7 @@ $h.update(function(delta){
 });
 minicam.zoomOut(10);
 minicam.moveTo($h.Vector(1000,1000));
+drawMap($h.canvas("minibg"), map, minicam);
 $h.render(function(){
   var master = $h.canvas("master");
   var c = $h.canvas("main");

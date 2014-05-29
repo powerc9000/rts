@@ -1,5 +1,6 @@
 var $h = require("./head-on");
 var drawMap = require("./mapTools").drawMap;
+var getTile = require("./mapTools").getTile;
 var map = require("./maps").one;
 var percent = 0;
 $h.events.listen("imagesLoadProgess", function(loaded, total){
@@ -80,6 +81,7 @@ exports.gamePlay = {
     var zero;
     var background = $h.canvas("background");
     var fg = $h.canvas("foreground");
+    var fow = $h.canvas("FoW");
     c.clear();
     m.clear();
     
@@ -112,18 +114,38 @@ exports.gamePlay = {
         color:"black"
       }
     });
+    fow.clear();
+    fow.drawRect({
+      x:0,
+      y:0,
+      width:fow.width,
+      height:fow.height,
+      camera:false,
+      color:"rgba(0,0,0,.6)"
+    });
     m.drawRect(camera.width, camera.height, camera.position.x, camera.position.y, "transparent", {width:2, color:"black"});
+    fow.canvas.ctx.save();
+    fow.canvas.ctx.globalCompositeOperation = "destination-out";
     $h.gamestate.units.forEach(function(dude){
       dude.render(c);
       dude.minimapRender(m);
+      var tile = getTile(dude, map);
+      //clipArc(fow.canvas.ctx, dude.position.x,dude.position.y, dude.viewDistance, 40);
+      fow.drawRect(60,60, dude.position.x-30,dude.position.y-30, "white");
+     
+
     });
+    fow.canvas.ctx.restore();
     if($h.gamestate.draging){
       c.drawRect($h.gamestate.box.width, $h.gamestate.box.height, $h.gamestate.box.x, $h.gamestate.box.y, "rgba(0,128, 0, .2)", {color:"green", width:2});
     }
+   
     fg.clear();
     fg.drawImage($h.images("cursor"), mos.x, mos.y);
   },
-  exit:function(){},
+  exit:function(){
+
+  },
   enter: function(){
 
     var camera = $h.canvas("main").canvas.camera;
@@ -158,3 +180,27 @@ exports.pausedState = {
     fg.clear();
   }
 };
+// var temp = document.createElement('canvas'),
+//         tx = temp.getContext('2d');
+//         temp.width = 1000;
+//         temp.height = 600;
+//         tx.translate(-1000, 0);
+// function clipArc(ctx, x, y, r, f) {
+
+    
+    
+//     tx.shadowOffsetX = temp.width;    
+//     tx.shadowOffsetY = 0;
+//     tx.shadowColor = '#000';
+//     tx.shadowBlur = f;
+    
+//     tx.arc(x, y, r, 0, 2 * Math.PI);
+//     tx.closePath();
+//     tx.fill();
+
+
+//     ctx.save();
+//     ctx.globalCompositeOperation = 'destination-out';
+//     ctx.drawImage(temp, 0, 0);
+//     ctx.restore();
+// }

@@ -18,7 +18,12 @@ exports.genMap = function genMap(width, height, tileW, tileH){
   }
   return map;
 };
-
+exports.getTile = function(entity, map){
+  var tile = [];
+  tile[0] = Math.floor(entity.position.x/map.tileWidth);
+  tile[1] = Math.floor(entity.position.y/map.tileHeight);
+  return tile;
+};
 exports.drawMap = function drawMap(canvas, map, camera){
   var tileColor ={
     1:"#777CC9",

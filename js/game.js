@@ -48,6 +48,7 @@ var gameState = {
 $h.canvas.create("master", 1000, 600, camera);
 $h.canvas.create("background", 1000, 600, camera);
 $h.canvas.create("foreground", 1000, 600, camera);
+$h.canvas.create("FoW", 1000, 600, camera);
 background = $h.canvas("background");
 //background.append("#container");
 inputBox = document.body.appendChild(inputBox);
@@ -101,7 +102,7 @@ entities.push(
   new Entity(70, 150, 20, 20, "grey")
 );
 entities[2].max_velocity = 300;
-
+entities[2].viewDistance = 300;
 $h.gamestate = {units:entities};
 $h.gamestate.canvasMouse = canvasMouse;
 $h.gamestate.box = box;
@@ -246,6 +247,7 @@ $h.render(function(){
   master.clear();
   master.drawImage(background.canvas.canvas, zero.x, zero.y);
   master.drawImage(c.canvas.canvas, zero.x, zero.y);
+  master.drawImage($h.canvas("FoW").canvas.canvas, zero.x, zero.y);
   master.drawImage(m.canvas.canvas, zero.x + 800, zero.y + 400);
   master.drawImage(fg.canvas.canvas, zero.x, zero.y);
   

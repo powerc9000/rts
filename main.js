@@ -18,6 +18,7 @@ module.exports = (function(){
     height:0,
     speed:0,
     a:0,
+    viewDistance:100,
     target: $h.Vector(50,50),
     selected:false,
     max_velocity:200,
@@ -76,7 +77,7 @@ module.exports = (function(){
       if(this.moving){
         canvas.drawLine(this.position, this.target, "black");
       }
-      canvas.drawRect(this.width, this.height, this.position.x - this.width/2, this.position.y - this.width/2, this.color, stroke);
+      canvas.drawRect(this.width, this.height, Math.floor(this.position.x - this.width/2), Math.floor(this.position.y - this.width/2), this.color, stroke);
       if($h.variable.DEBUG){
         canvas.drawCircle(this.position.x, this.position.y, $h.variable.NEIGHBOR_RADIUS, "transparent", {width:1, color:this.color});
         canvas.drawLine(this.position, this.position.add(this.velocity), "red");
@@ -293,6 +294,7 @@ var gameState = {
 $h.canvas.create("master", 1000, 600, camera);
 $h.canvas.create("background", 1000, 600, camera);
 $h.canvas.create("foreground", 1000, 600, camera);
+$h.canvas.create("FoW", 1000, 600, camera);
 background = $h.canvas("background");
 //background.append("#container");
 inputBox = document.body.appendChild(inputBox);
@@ -346,7 +348,7 @@ entities.push(
   new Entity(70, 150, 20, 20, "grey")
 );
 entities[2].max_velocity = 300;
-
+entities[2].viewDistance = 300;
 $h.gamestate = {units:entities};
 $h.gamestate.canvasMouse = canvasMouse;
 $h.gamestate.box = box;
@@ -491,6 +493,7 @@ $h.render(function(){
   master.clear();
   master.drawImage(background.canvas.canvas, zero.x, zero.y);
   master.drawImage(c.canvas.canvas, zero.x, zero.y);
+  master.drawImage($h.canvas("FoW").canvas.canvas, zero.x, zero.y);
   master.drawImage(m.canvas.canvas, zero.x + 800, zero.y + 400);
   master.drawImage(fg.canvas.canvas, zero.x, zero.y);
   
@@ -585,6 +588,7 @@ function clone(obj) {
 },{"./entity":1,"./gamestates":3,"./head-on":4,"./keys":5,"./mapTools":6,"./maps":7,"./mouse":8}],3:[function(require,module,exports){
 var $h = require("./head-on");
 var drawMap = require("./mapTools").drawMap;
+var getTile = require("./mapTools").getTile;
 var map = require("./maps").one;
 var percent = 0;
 $h.events.listen("imagesLoadProgess", function(loaded, total){
@@ -665,6 +669,7 @@ exports.gamePlay = {
     var zero;
     var background = $h.canvas("background");
     var fg = $h.canvas("foreground");
+    var fow = $h.canvas("FoW");
     c.clear();
     m.clear();
     
@@ -697,18 +702,38 @@ exports.gamePlay = {
         color:"black"
       }
     });
+    fow.clear();
+    fow.drawRect({
+      x:0,
+      y:0,
+      width:fow.width,
+      height:fow.height,
+      camera:false,
+      color:"rgba(0,0,0,.6)"
+    });
     m.drawRect(camera.width, camera.height, camera.position.x, camera.position.y, "transparent", {width:2, color:"black"});
+    fow.canvas.ctx.save();
+    fow.canvas.ctx.globalCompositeOperation = "destination-out";
     $h.gamestate.units.forEach(function(dude){
       dude.render(c);
       dude.minimapRender(m);
+      var tile = getTile(dude, map);
+      //clipArc(fow.canvas.ctx, dude.position.x,dude.position.y, dude.viewDistance, 40);
+      fow.drawRect(60,60, dude.position.x-30,dude.position.y-30, "white");
+     
+
     });
+    fow.canvas.ctx.restore();
     if($h.gamestate.draging){
       c.drawRect($h.gamestate.box.width, $h.gamestate.box.height, $h.gamestate.box.x, $h.gamestate.box.y, "rgba(0,128, 0, .2)", {color:"green", width:2});
     }
+   
     fg.clear();
     fg.drawImage($h.images("cursor"), mos.x, mos.y);
   },
-  exit:function(){},
+  exit:function(){
+
+  },
   enter: function(){
 
     var camera = $h.canvas("main").canvas.camera;
@@ -743,6 +768,30 @@ exports.pausedState = {
     fg.clear();
   }
 };
+// var temp = document.createElement('canvas'),
+//         tx = temp.getContext('2d');
+//         temp.width = 1000;
+//         temp.height = 600;
+//         tx.translate(-1000, 0);
+// function clipArc(ctx, x, y, r, f) {
+
+    
+    
+//     tx.shadowOffsetX = temp.width;    
+//     tx.shadowOffsetY = 0;
+//     tx.shadowColor = '#000';
+//     tx.shadowBlur = f;
+    
+//     tx.arc(x, y, r, 0, 2 * Math.PI);
+//     tx.closePath();
+//     tx.fill();
+
+
+//     ctx.save();
+//     ctx.globalCompositeOperation = 'destination-out';
+//     ctx.drawImage(temp, 0, 0);
+//     ctx.restore();
+// }
 },{"./head-on":4,"./mapTools":6,"./maps":7}],4:[function(require,module,exports){
 //     __  __         __           _
 //    / / / /__  ____ _____/ /  ____  ____         (_)____
@@ -1600,7 +1649,12 @@ exports.genMap = function genMap(width, height, tileW, tileH){
   }
   return map;
 };
-
+exports.getTile = function(entity, map){
+  var tile = [];
+  tile[0] = Math.floor(entity.position.x/map.tileWidth);
+  tile[1] = Math.floor(entity.position.y/map.tileHeight);
+  return tile;
+};
 exports.drawMap = function drawMap(canvas, map, camera){
   var tileColor ={
     1:"#777CC9",

@@ -17,6 +17,7 @@ module.exports = (function(){
     height:0,
     speed:0,
     a:0,
+    viewDistance:100,
     target: $h.Vector(50,50),
     selected:false,
     max_velocity:200,
@@ -75,7 +76,7 @@ module.exports = (function(){
       if(this.moving){
         canvas.drawLine(this.position, this.target, "black");
       }
-      canvas.drawRect(this.width, this.height, this.position.x - this.width/2, this.position.y - this.width/2, this.color, stroke);
+      canvas.drawRect(this.width, this.height, Math.floor(this.position.x - this.width/2), Math.floor(this.position.y - this.width/2), this.color, stroke);
       if($h.variable.DEBUG){
         canvas.drawCircle(this.position.x, this.position.y, $h.variable.NEIGHBOR_RADIUS, "transparent", {width:1, color:this.color});
         canvas.drawLine(this.position, this.position.add(this.velocity), "red");

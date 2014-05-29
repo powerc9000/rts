@@ -242,12 +242,15 @@ module.exports = (function(){
    return Entity;
 }());
 
-},{"./head-on":3}],2:[function(require,module,exports){
+},{"./head-on":4}],2:[function(require,module,exports){
 var $h = require("./head-on");
 var Entity = require("./entity");
 var mouse = require("./mouse");
 var camera = new $h.Camera(1000, 600);
 var keys = require("./keys");
+var gamestates = require("./gamestates");
+var drawMap = require("./mapTools").drawMap;
+var genMap = require("./mapTools").genMap;
 var startPoint = {};
 var box = {};
 var draging;
@@ -267,16 +270,10 @@ var background;
 var minimapClick;
 var percent;
 var scrollDirection;
-var map = {
-  width:2000,
-  height:2000,
-  tileWidth:20,
-  tileHeight:20,
-  map:genMap(2000,2000,20,20)
-};
+var map = require("./maps").one;
 var gameState = {
   init: function(){
-    this.state = loadState;
+    this.state = gamestates.loadState;
   },
   changeState: function(state){
     if(this.state){
@@ -291,147 +288,6 @@ var gameState = {
   },
   render: function(){
     this.state.render(this);
-  }
-};
-var loadState = {
-  update: function(entity){
-    if($h.imagesLoaded){
-      setTimeout(function(){
-        entity.changeState(gamePlay); 
-      },2000);
-         
-    }
-  },
-  render:function(){
-    background.clear();
-    background.drawRect({
-      x:0,
-      y:0,
-      width:background.width,
-      height:background.height,
-      color:"purple",
-      camera:false
-    });
-    background.drawText("Loading: "+(percent*100)+"%", background.width/2, background.height/2, false, "white", "center");
-  },
-  exit:function(){}
-};
-var gamePlay = {
-  update: function(entity, delta){
-    entities.forEach(function(dude){
-      dude.update(delta);
-    });
-    if($h.paused){
-      entity.changeState(pausedState);
-    }
-    var scrollx  = 10;
-    var scrolly = 10;
-    if(scroll){
-      switch(scrollDirection){
-        case "up":
-          camera.move($h.Vector(0,-scrolly));
-          if(camera.position.y < 0){
-            camera.move($h.Vector(0,scrolly));
-          }
-          break;
-        case "down":
-          camera.move($h.Vector(0,scrolly));
-          if(camera.position.y + camera.height > map.height){
-            camera.move($h.Vector(0,-scrolly));
-          }
-          break;
-        case "left":
-          camera.move($h.Vector(-scrollx,0));
-          if(camera.position.x < 0){
-            camera.move($h.Vector(scrollx,0));
-          }
-          break;
-        case "right":
-          camera.move($h.Vector(scrollx,0));
-          if(camera.position.x + camera.width > map.width){
-            camera.move($h.Vector(-scrollx,0));
-          }
-          break;
-
-      }
-    }
-   
-  },
-  render:function(){
-    var c = $h.canvas("main");
-    var m = $h.canvas("minimap");
-    var mos = camera.project(canvasMouse.mousePos());
-    var zero;
-    c.clear();
-    m.clear();
-    
-    
-
-    if(scroll || minimapClick){
-      background.clear();
-      drawMap(background, map, camera);
-      //scroll = false;
-    }
-    m.drawRect({
-      width:200,
-      height:200,
-      color:"white",
-      x:0,
-      y:0,
-      camera:false
-    });
-    //drawMap(m, map, minicam);
-    m.drawImage($h.canvas("minibg").canvas.canvas, 0,0);
-    m.drawRect({
-      x:0,
-      y:0,
-      width:200,
-      height:200,
-      camera:false,
-      color:"transparent",
-      stroke:{
-        width:4,
-        color:"black"
-      }
-    });
-    m.drawRect(camera.width, camera.height, camera.position.x, camera.position.y, "transparent", {width:2, color:"black"});
-    entities.forEach(function(dude){
-      dude.render(c);
-      dude.minimapRender(m);
-    });
-    if(draging){
-      c.drawRect(box.width, box.height, box.x, box.y, "rgba(0,128, 0, .2)", {color:"green", width:2});
-    }
-  },
-  exit:function(){},
-  enter: function(){
-    background.clear();
-    drawMap(background, map, camera);
-  }
-};
-var pausedState = {
-  update:function(entity, delta){
-    if(!$h.paused){
-      entity.changeState(gamePlay);
-    }
-  },
-  render: function(entity){
-  },
-  enter:function(){
-    var fg = $h.canvas("foreground");
-    fg.drawRect({
-      width:fg.width,
-      height:fg.height,
-      x:0,
-      y:0,
-      camera:false,
-      color:"rgba(0,0,0,.9)"
-    });
-    fg.drawText("paused", fg.width/2, fg.height/2, false, "white", "center");
-  },
-  exit:function(){
-    var fg = $h.canvas("foreground");
-    fg.clear();
   }
 };
 $h.canvas.create("master", 1000, 600, camera);
@@ -492,6 +348,9 @@ entities.push(
 entities[2].max_velocity = 300;
 
 $h.gamestate = {units:entities};
+$h.gamestate.canvasMouse = canvasMouse;
+$h.gamestate.box = box;
+$h.gamestate.dragging = draging;
 $h.variable = {
   SEPARATION_CONST: 70,
   NEIGHBOR_RADIUS: 40,
@@ -559,16 +418,16 @@ canvasMouse.listen("leftMouseDown", function(coords, button){
     coords = camera.project(coords);
     minimapClick = false;
   }
-	startPoint = coords;
-	draging = true;
+	$h.gamestate.startPoint = startPoint = coords;
+	$h.gamestate.draging = draging = true;
 });
 canvasMouse.listen("scroll", function(direction){
   if(direction){
-    scroll = true;
+    $h.gamestate.scroll = true;
   }else{
-    scroll = false; 
+    $h.gamestate.scroll = false; 
   }
-  scrollDirection = direction;
+  $h.gamestate.scrollDirection = direction;
 });
 canvasMouse.listen("drag", function(coords){
   coords = camera.project(coords);
@@ -604,8 +463,8 @@ canvasMouse.listen("mouseUp", function(coords, button){
     }
 	}
 	draging = false;
-	startPoint = {};
-	box = {};
+	$h.gamestate.startPoint = startPoint = {};
+	$h.gamestate.box = box = {};
 });
 
 
@@ -644,7 +503,7 @@ $h.loadImages(
 
   ],
   function(loaded, total){
-  percent = loaded/total;
+  $h.events.trigger("imagesLoadProgess", loaded, total);
 });
 gameState.init();
 $h.run();
@@ -720,60 +579,168 @@ function clone(obj) {
     throw new Error("Unable to copy obj! Its type isn't supported.");
 }
 
-function drawMap(canvas, map, camera){
-  var tileColor ={
-    1:"#777CC9",
-    0:"#8045BF"
-  };
-  var tiles = map.map;
-  var topleft = {x:0,y:0};
-  var topright = {x:0,y:0};
-  var botleft = {x:0,y:0};
-  var botright = {x:0, y:0};
-  for(var y = 0; y < tiles.length; y++){
-    topleft.y = y*map.tileHeight;
-    topright.y = topleft.y;
-    botleft.y = y*map.tileHeight + map.tileHeight;
-    botright.y = botleft.y;
-    for(var x = 0; x<tiles[y].length; x++){
-      if(tiles[y][x] === 0 || tiles[y][x] === 1){
-        topleft.x = x*map.tileWidth;
-        topright.x = x*map.tileWidth + map.tileWidth;
-        botleft.x = topleft.x;
-        botright.x = topright.x;
-          if(camera.inView(topleft) ||
-            camera.inView(topright) ||
-            camera.inView(botleft) ||
-            camera.inView(botright)
-            ){
-            canvas.drawRect(map.tileWidth, map.tileHeight, x*map.tileWidth, y*map.tileHeight, tileColor[tiles[y][x]]);
+
+
+
+},{"./entity":1,"./gamestates":3,"./head-on":4,"./keys":5,"./mapTools":6,"./maps":7,"./mouse":8}],3:[function(require,module,exports){
+var $h = require("./head-on");
+var drawMap = require("./mapTools").drawMap;
+var map = require("./maps").one;
+var percent = 0;
+$h.events.listen("imagesLoadProgess", function(loaded, total){
+  percent = (loaded/total);
+});
+exports.loadState = {
+  update: function(entity){
+    if($h.imagesLoaded){
+      setTimeout(function(){
+        entity.changeState(exports.gamePlay); 
+      },2000);
+         
+    }
+  },
+  render:function(){
+    var background = $h.canvas("background");
+    background.clear();
+    background.drawRect({
+      x:0,
+      y:0,
+      width:background.width,
+      height:background.height,
+      color:"purple",
+      camera:false
+    });
+    background.drawText("Loading: "+(percent*100)+"%", background.width/2, background.height/2, false, "white", "center");
+  },
+  exit:function(){}
+};
+exports.gamePlay = {
+  update: function(entity, delta){
+    var camera = $h.canvas("main").canvas.camera;
+    $h.gamestate.units.forEach(function(dude){
+      dude.update(delta);
+    });
+    if($h.paused){
+      entity.changeState(exports.pausedState);
+    }
+    var scrollx  = 10;
+    var scrolly = 10;
+
+    if($h.gamestate.scroll){
+      switch($h.gamestate.scrollDirection){
+        case "up":
+          camera.move($h.Vector(0,-scrolly));
+          if(camera.position.y < 0){
+            camera.move($h.Vector(0,scrolly));
           }
+          break;
+        case "down":
+          camera.move($h.Vector(0,scrolly));
+          if(camera.position.y + camera.height > map.height){
+            camera.move($h.Vector(0,-scrolly));
+          }
+          break;
+        case "left":
+          camera.move($h.Vector(-scrollx,0));
+          if(camera.position.x < 0){
+            camera.move($h.Vector(scrollx,0));
+          }
+          break;
+        case "right":
+          camera.move($h.Vector(scrollx,0));
+          if(camera.position.x + camera.width > map.width){
+            camera.move($h.Vector(-scrollx,0));
+          }
+          break;
+
       }
     }
-  }
-}
+   
+  },
+  render:function(){
+    var camera = $h.canvas("main").canvas.camera;
+    var c = $h.canvas("main");
+    var m = $h.canvas("minimap");
+    var mos = camera.project($h.gamestate.canvasMouse.mousePos());
+    var zero;
+    var background = $h.canvas("background");
+    c.clear();
+    m.clear();
+    
+    
 
-function genMap(width, height, tileW, tileH){
-  var rows = height/tileH;
-  var cols = width/tileW;
-  var map = [];
-  for(var y = 0; y < rows; y++){
-    map[y] = [];
-    for(var x = 0; x < cols; x++){
-      var rand = $h.randInt(0,100);
-      if(rand > 20){
-        map[y][x] = 0;
-      }else if(rand > 5){
-        map[y][x] = 1;
-      }else{
-        map[y][x] = 2;
-      }
+    if(scroll || minimapClick){
+      background.clear();
+      drawMap(background, map, camera);
+      //scroll = false;
     }
-  }
-  return map;
-}
+    m.drawRect({
+      width:200,
+      height:200,
+      color:"white",
+      x:0,
+      y:0,
+      camera:false
+    });
+    //drawMap(m, map, minicam);
+    m.drawImage($h.canvas("minibg").canvas.canvas, 0,0);
+    m.drawRect({
+      x:0,
+      y:0,
+      width:200,
+      height:200,
+      camera:false,
+      color:"transparent",
+      stroke:{
+        width:4,
+        color:"black"
+      }
+    });
+    m.drawRect(camera.width, camera.height, camera.position.x, camera.position.y, "transparent", {width:2, color:"black"});
+    $h.gamestate.units.forEach(function(dude){
+      dude.render(c);
+      dude.minimapRender(m);
+    });
+    if($h.gamestate.draging){
+      c.drawRect($h.gamestate.box.width, $h.gamestate.box.height, $h.gamestate.box.x, $h.gamestate.box.y, "rgba(0,128, 0, .2)", {color:"green", width:2});
+    }
+  },
+  exit:function(){},
+  enter: function(){
 
-},{"./entity":1,"./head-on":3,"./keys":4,"./mouse":5}],3:[function(require,module,exports){
+    var camera = $h.canvas("main").canvas.camera;
+    var background = $h.canvas("background");
+    $h.gamestate.canvasMouse.unpause();
+    background.clear();
+    drawMap(background, map, camera);
+  }
+};
+exports.pausedState = {
+  update:function(entity, delta){
+    if(!$h.paused){
+      entity.changeState(exports.gamePlay);
+    }
+  },
+  render: function(entity){
+  },
+  enter:function(){
+    var fg = $h.canvas("foreground");
+    fg.drawRect({
+      width:fg.width,
+      height:fg.height,
+      x:0,
+      y:0,
+      camera:false,
+      color:"rgba(0,0,0,.9)"
+    });
+    fg.drawText("paused", fg.width/2, fg.height/2, false, "white", "center");
+  },
+  exit:function(){
+    var fg = $h.canvas("foreground");
+    fg.clear();
+  }
+};
+},{"./head-on":4,"./mapTools":6,"./maps":7}],4:[function(require,module,exports){
 //     __  __         __           _
 //    / / / /__  ____ _____/ /  ____  ____         (_)____
 //   / /_/ / _ \/ __ `/ __  /_____/ __ \/ __ \    / / ___/
@@ -1593,7 +1560,7 @@ function genMap(width, height, tileW, tileH){
   window.headOn = headOn;
 })(window);
 
-},{}],4:[function(require,module,exports){
+},{}],5:[function(require,module,exports){
 var $h = require("./head-on");
 $h.keys = {};
 addEventListener("keydown", function(e){
@@ -1609,7 +1576,71 @@ addEventListener("keyup", function(e){
     }
   }
 });
-},{"./head-on":3}],5:[function(require,module,exports){
+},{"./head-on":4}],6:[function(require,module,exports){
+var $h = require("./head-on");
+exports.genMap = function genMap(width, height, tileW, tileH){
+  var rows = height/tileH;
+  var cols = width/tileW;
+  var map = [];
+  for(var y = 0; y < rows; y++){
+    map[y] = [];
+    for(var x = 0; x < cols; x++){
+      var rand = $h.randInt(0,100);
+      if(rand > 20){
+        map[y][x] = 0;
+      }else if(rand > 5){
+        map[y][x] = 1;
+      }else{
+        map[y][x] = 2;
+      }
+    }
+  }
+  return map;
+};
+
+exports.drawMap = function drawMap(canvas, map, camera){
+  var tileColor ={
+    1:"#777CC9",
+    0:"#8045BF"
+  };
+  var tiles = map.map;
+  var topleft = {x:0,y:0};
+  var topright = {x:0,y:0};
+  var botleft = {x:0,y:0};
+  var botright = {x:0, y:0};
+  for(var y = 0; y < tiles.length; y++){
+    topleft.y = y*map.tileHeight;
+    topright.y = topleft.y;
+    botleft.y = y*map.tileHeight + map.tileHeight;
+    botright.y = botleft.y;
+    for(var x = 0; x<tiles[y].length; x++){
+      if(tiles[y][x] === 0 || tiles[y][x] === 1){
+        topleft.x = x*map.tileWidth;
+        topright.x = x*map.tileWidth + map.tileWidth;
+        botleft.x = topleft.x;
+        botright.x = topright.x;
+          if(camera.inView(topleft) ||
+            camera.inView(topright) ||
+            camera.inView(botleft) ||
+            camera.inView(botright)
+            ){
+            canvas.drawRect(map.tileWidth, map.tileHeight, x*map.tileWidth, y*map.tileHeight, tileColor[tiles[y][x]]);
+          }
+      }
+    }
+  }
+}
+;
+},{"./head-on":4}],7:[function(require,module,exports){
+var genMap = require("./mapTools").genMap;
+exports.one = {
+  width:2000,
+  height:2000,
+  tileWidth:20,
+  tileHeight:20,
+  map:genMap(2000,2000,20,20)
+};
+},{"./mapTools":6}],8:[function(require,module,exports){
 //Setup event listeners for the mouse
 var $h = require("./head-on");
 module.exports = function(obj, camera){
@@ -1617,7 +1648,7 @@ module.exports = function(obj, camera){
   var listeners = {};
   obj = obj || window;
   var dragging;
-
+  var paused = true;
   var mousePos = $h.Vector(obj.width/2, obj.height/2);
   obj.requestPointerLock = obj.requestPointerLock ||
              obj.mozRequestPointerLock ||
@@ -1635,6 +1666,7 @@ module.exports = function(obj, camera){
   }
 
   obj.addEventListener("mousedown", function(e){
+    if(paused) return;
     obj.requestPointerLock();
     var button = e.which || e.button;
     var coords = getCoords(e);
@@ -1652,6 +1684,7 @@ module.exports = function(obj, camera){
     }
   });
   obj.addEventListener("contextmenu", function(e){
+    if(paused) return;
     var coords = getCoords(e);
     if(listeners.rightmousedown){
       listeners.rightmousedown.call(null, mousePos);
@@ -1659,6 +1692,7 @@ module.exports = function(obj, camera){
     }
   });
   obj.addEventListener("mouseup", function(e){
+    if(paused) return;
     var button = e.which || e.button;
     var coords = getCoords(e);
     if(button === 1){
@@ -1671,6 +1705,7 @@ module.exports = function(obj, camera){
   });
   var scroll = false;
   obj.addEventListener("mousemove", function(e){
+    if(paused) return;
     var vec = {x:e.webkitMovementX, y:e.webkitMovementY};
     mousePos = mousePos.add(vec);
     if(mousePos.x > obj.width-5){
@@ -1708,9 +1743,15 @@ module.exports = function(obj, camera){
     },
     mousePos:function(){
       return mousePos;
+    },
+    pause: function(){
+      paused = true;
+    },
+    unpause: function(){
+      paused = false;
     }
   };
 
 };
 
-},{"./head-on":3}]},{},[2])
+},{"./head-on":4}]},{},[2])

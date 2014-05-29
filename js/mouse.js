@@ -5,7 +5,7 @@ module.exports = function(obj, camera){
   var listeners = {};
   obj = obj || window;
   var dragging;
-
+  var paused = true;
   var mousePos = $h.Vector(obj.width/2, obj.height/2);
   obj.requestPointerLock = obj.requestPointerLock ||
              obj.mozRequestPointerLock ||
@@ -23,6 +23,7 @@ module.exports = function(obj, camera){
   }
 
   obj.addEventListener("mousedown", function(e){
+    if(paused) return;
     obj.requestPointerLock();
     var button = e.which || e.button;
     var coords = getCoords(e);
@@ -40,6 +41,7 @@ module.exports = function(obj, camera){
     }
   });
   obj.addEventListener("contextmenu", function(e){
+    if(paused) return;
     var coords = getCoords(e);
     if(listeners.rightmousedown){
       listeners.rightmousedown.call(null, mousePos);
@@ -47,6 +49,7 @@ module.exports = function(obj, camera){
     }
   });
   obj.addEventListener("mouseup", function(e){
+    if(paused) return;
     var button = e.which || e.button;
     var coords = getCoords(e);
     if(button === 1){
@@ -59,6 +62,7 @@ module.exports = function(obj, camera){
   });
   var scroll = false;
   obj.addEventListener("mousemove", function(e){
+    if(paused) return;
     var vec = {x:e.webkitMovementX, y:e.webkitMovementY};
     mousePos = mousePos.add(vec);
     if(mousePos.x > obj.width-5){
@@ -96,6 +100,12 @@ module.exports = function(obj, camera){
     },
     mousePos:function(){
       return mousePos;
+    },
+    pause: function(){
+      paused = true;
+    },
+    unpause: function(){
+      paused = false;
     }
   };
 

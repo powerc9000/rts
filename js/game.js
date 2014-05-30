@@ -26,6 +26,7 @@ var minimapClick;
 var percent;
 var scrollDirection;
 var map = require("./maps").one;
+console.log(map);
 var gameState = {
   init: function(){
     this.state = gamestates.loadState;
@@ -49,6 +50,17 @@ $h.canvas.create("master", 1000, 600, camera);
 $h.canvas.create("background", 1000, 600, camera);
 $h.canvas.create("foreground", 1000, 600, camera);
 $h.canvas.create("FoW", 1000, 600, camera);
+$h.canvas.create("darkness", map.width, map.height, camera);
+
+$h.canvas("darkness").drawRect({
+  x:0,
+  y:0,
+  width:map.width,
+  height:map.height,
+  camera:false,
+  color:"black"
+});
+$h.canvas("darkness").canvas.ctx.globalCompositeOperation = "destination-out";
 background = $h.canvas("background");
 //background.append("#container");
 inputBox = document.body.appendChild(inputBox);
@@ -232,8 +244,8 @@ document.addEventListener("webkitpointerlockchange", function(e){
 $h.update(function(delta){
   gameState.update(delta);
 });
-minicam.zoomOut(10);
-minicam.moveTo($h.Vector(1000,1000));
+minicam.zoomOut(20);
+minicam.moveTo($h.Vector(2000,2000));
 drawMap($h.canvas("minibg"), map, minicam);
 $h.render(function(){
   var master = $h.canvas("master");

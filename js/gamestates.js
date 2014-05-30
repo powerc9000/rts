@@ -84,9 +84,6 @@ exports.gamePlay = {
     var fow = $h.canvas("FoW");
     c.clear();
     m.clear();
-    
-    
-
     if(scroll || minimapClick){
       background.clear();
       drawMap(background, map, camera);
@@ -102,18 +99,7 @@ exports.gamePlay = {
     });
     //drawMap(m, map, minicam);
     m.drawImage($h.canvas("minibg").canvas.canvas, 0,0);
-    m.drawRect({
-      x:0,
-      y:0,
-      width:200,
-      height:200,
-      camera:false,
-      color:"transparent",
-      stroke:{
-        width:4,
-        color:"black"
-      }
-    });
+    
     fow.clear();
     fow.drawRect({
       x:0,
@@ -123,7 +109,7 @@ exports.gamePlay = {
       camera:false,
       color:"rgba(0,0,0,.6)"
     });
-    m.drawRect(camera.width, camera.height, camera.position.x, camera.position.y, "transparent", {width:2, color:"black"});
+    
     fow.canvas.ctx.save();
     fow.canvas.ctx.globalCompositeOperation = "destination-out";
     $h.gamestate.units.forEach(function(dude){
@@ -131,11 +117,33 @@ exports.gamePlay = {
       dude.minimapRender(m);
       var tile = getTile(dude, map);
       //clipArc(fow.canvas.ctx, dude.position.x,dude.position.y, dude.viewDistance, 40);
-      fow.drawRect(60,60, dude.position.x-30,dude.position.y-30, "white");
-     
-
+      fow.drawRect(100,100, dude.position.x-50,dude.position.y-50, "white");
+      $h.canvas("darkness").drawRect({
+        width:100,
+        height:100, 
+        x:dude.position.x-50,
+        y:dude.position.y-50, 
+        color:"white",
+        camera:false
+      });
     });
+    
     fow.canvas.ctx.restore();
+    fow.canvas.ctx.drawImage($h.canvas("darkness").canvas.canvas, camera.position.x, camera.position.y, camera.width, camera.height, 0,0, 1000, 600);
+    m.canvas.ctx.drawImage($h.canvas("darkness").canvas.canvas, 0, 0, 4000, 4000, 0,0, 200, 200);
+    m.drawRect(camera.width, camera.height, camera.position.x, camera.position.y, "transparent", {width:2, color:"white"});
+    m.drawRect({
+      x:0,
+      y:0,
+      width:200,
+      height:200,
+      camera:false,
+      color:"transparent",
+      stroke:{
+        width:4,
+        color:"white"
+      }
+    });
     if($h.gamestate.draging){
       c.drawRect($h.gamestate.box.width, $h.gamestate.box.height, $h.gamestate.box.x, $h.gamestate.box.y, "rgba(0,128, 0, .2)", {color:"green", width:2});
     }

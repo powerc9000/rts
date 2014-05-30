@@ -28,12 +28,20 @@
         events: {
           events: {},
           listen: function(eventName, callback){
+            var id = headOn.uId();
             if(!this.events[eventName]){
               this.events[eventName] = [];
             }
-            this.events[eventName].push(callback);
+            this.events[eventName].push({cb:callback, id:id});
           },
-
+          unlisten:function(eventName, id){
+            if(!this.events[eventName]) return;
+            this.events[eventName].forEach(function(e, i){
+              if(e.id === id){
+                this.events[eventName].splice(i,1);
+              }
+            });
+          },
           trigger: function(eventName){
             var args = [].splice.call(arguments, 1),
               e = this.events[eventName],
@@ -42,11 +50,16 @@
             if(e){
               l = e.length;
               for(i = 0; i < l; i++){
-                e[i].apply(headOn, args);
+                e[i].cb.apply(headOn, args);
               }
             }
 
           }
+        },
+        uId: function s4() {
+            return Math.floor((1 + Math.random()) * 0x10000)
+               .toString(16)
+               .substring(1);
         },
         FSM: function(entity){
           this.entity = entity;
@@ -588,10 +601,25 @@
         return this;
       },
       drawCircle: function(x, y, radius, color, stroke){
-        var ctx = this.canvas.ctx, camera = this.canvas.camera;
+        var ctx = this.canvas.ctx, mod = 1, camera = this.canvas.camera, oneArg;
+        if(arguments.length === 1 && typeof arguments[0] === "object"){
+          oneArg = true;
+          x=arguments[0].x;
+          y=arguments[0].y;
+          radius=arguments[0].radius;
+          color = arguments[0].color;
+          stroke = arguments[0].stroke;
+        }
+        
         ctx.save();
         ctx.beginPath();
-        ctx.arc((x - camera.position.x)/camera.zoomAmt, (y - camera.position.y)/camera.zoomAmt, radius / camera.zoomAmt, 0, 2*Math.PI, false);
+        if(oneArg && arguments[0].camera === false){
+          ctx.arc(x, y, radius, 0, 2*Math.PI, false);
+        }else{
+
+          ctx.arc((x - camera.position.x)/camera.zoomAmt, (y - camera.position.y)/camera.zoomAmt, radius / camera.zoomAmt, 0, 2*Math.PI, false);
+        }
+        
         ctx.fillStyle = color || "black";
         ctx.fill();
         this.stroke(stroke);
@@ -634,7 +662,26 @@
         ctx.restore();
         return this;
       },
-
+      createGradient: function(options){
+        var grd;
+        var ctx = this.canvas.ctx;
+        var camera = this.canvas.camera;
+        var start;
+        var end;
+        if(options.camera !== false){
+          start = camera.unproject(options.start);
+          end = camera.unproject(options.end);
+        }else{
+          start = options.start;
+          end = options.end;
+        }
+        if(options.type === "radial"){
+          return ctx.createRadialGradient(start.x, start.y, options.radius1, end.x, end.y, options.radius2);
+        }else{
+          return ctx.createLinearGradient(start.x, start.y, end.x, end.y);
+        }
+        
+      },
       drawText: function(textString, x, y, fontStyle, color, alignment, baseline){
         var ctx = this.canvas.ctx;
         ctx.save();
@@ -734,6 +781,7 @@
       move: function(vec){
         this.position = this.position.add(vec);
         this.center = this.position.add(headOn.Vector(this.width, this.height).mul(0.5));
+        headOn.events.trigger("cameraMoved", this);
         return this;
       },
       inView: function(vec){
@@ -745,13 +793,14 @@
       },
       moveTo: function(vec){
         this.position = vec.sub(this.dimensions.mul(0.5).mul(this.zoomAmt));
+        headOn.events.trigger("cameraMoved", this);
         this.center = vec;
       },
       project: function(vec){
         return vec.mul(this.zoomAmt).add(this.position);
       },
       unproject: function(vec){
-        return vec.sub(this.position);
+        return vec.mul(1/this.zoomAmt).sub(this.position);
       }
     };
     headOn.Vector.prototype = {

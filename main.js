@@ -1,4 +1,450 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);throw new Error("Cannot find module '"+o+"'")}var f=n[o]={exports:{}};t[o][0].call(f.exports,function(e){var n=t[o][1][e];return s(n?n:e)},f,f.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+/* StackBoxBlur - a fast almost Box Blur For Canvas
+
+// Version:  0.3
+// Author:   Mario Klingemann
+// Contact:  mario@quasimondo.com
+// Website:  http://www.quasimondo.com/
+// Twitter:  @quasimondo
+
+// In case you find this class useful - especially in commercial projects -
+// I am not totally unhappy for a small donation to my PayPal account
+// mario@quasimondo.de
+
+// Copyright (c) 2010 Mario Klingemann
+
+// Permission is hereby granted, free of charge, to any person
+// obtaining a copy of this software and associated documentation
+// files (the "Software"), to deal in the Software without
+// restriction, including without limitation the rights to use,
+// copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the
+// Software is furnished to do so, subject to the following
+// conditions:
+
+// The above copyright notice and this permission notice shall be
+// included in all copies or substantial portions of the Software.
+
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+// EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+// OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+// NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+// HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+// WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+// OTHER DEALINGS IN THE SOFTWARE.
+*/
+/*
+var mul_table = [ 1,57,41,21,203,34,97,73,227,91,149,62,105,45,39,137,241,107,3,173,39,71,65,238,219,101,187,87,81,151,141,133,249,117,221,209,197,187,177,169,5,153,73,139,133,127,243,233,223,107,103,99,191,23,177,171,165,159,77,149,9,139,135,131,253,245,119,231,224,109,211,103,25,195,189,23,45,175,171,83,81,79,155,151,147,9,141,137,67,131,129,251,123,30,235,115,113,221,217,53,13,51,50,49,193,189,185,91,179,175,43,169,83,163,5,79,155,19,75,147,145,143,35,69,17,67,33,65,255,251,247,243,239,59,29,229,113,111,219,27,213,105,207,51,201,199,49,193,191,47,93,183,181,179,11,87,43,85,167,165,163,161,159,157,155,77,19,75,37,73,145,143,141,35,138,137,135,67,33,131,129,255,63,250,247,61,121,239,237,117,29,229,227,225,111,55,109,216,213,211,209,207,205,203,201,199,197,195,193,48,190,47,93,185,183,181,179,178,176,175,173,171,85,21,167,165,41,163,161,5,79,157,78,154,153,19,75,149,74,147,73,144,143,71,141,140,139,137,17,135,134,133,66,131,65,129,1];
+        
+   
+var shg_table = [0,9,10,10,14,12,14,14,16,15,16,15,16,15,15,17,18,17,12,18,16,17,17,19,19,18,19,18,18,19,19,19,20,19,20,20,20,20,20,20,15,20,19,20,20,20,21,21,21,20,20,20,21,18,21,21,21,21,20,21,17,21,21,21,22,22,21,22,22,21,22,21,19,22,22,19,20,22,22,21,21,21,22,22,22,18,22,22,21,22,22,23,22,20,23,22,22,23,23,21,19,21,21,21,23,23,23,22,23,23,21,23,22,23,18,22,23,20,22,23,23,23,21,22,20,22,21,22,24,24,24,24,24,22,21,24,23,23,24,21,24,23,24,22,24,24,22,24,24,22,23,24,24,24,20,23,22,23,24,24,24,24,24,24,24,23,21,23,22,23,24,24,24,22,24,24,24,23,22,24,24,25,23,25,25,23,24,25,25,24,22,25,25,25,24,23,24,25,25,25,25,25,25,25,25,25,25,25,25,23,25,23,24,25,25,25,25,25,25,25,25,25,24,22,25,25,23,25,25,20,24,25,24,25,25,22,24,25,24,25,24,25,25,24,25,25,25,25,22,25,25,25,24,25,24,25,18];
+*/
+
+var mul_table = [ 1,171,205,293,57,373,79,137,241,27,391,357,41,19,283,265,497,469,443,421,25,191,365,349,335,161,155,149,9,278,269,261,505,245,475,231,449,437,213,415,405,395,193,377,369,361,353,345,169,331,325,319,313,307,301,37,145,285,281,69,271,267,263,259,509,501,493,243,479,118,465,459,113,446,55,435,429,423,209,413,51,403,199,393,97,3,379,375,371,367,363,359,355,351,347,43,85,337,333,165,327,323,5,317,157,311,77,305,303,75,297,294,73,289,287,71,141,279,277,275,68,135,67,133,33,262,260,129,511,507,503,499,495,491,61,121,481,477,237,235,467,232,115,457,227,451,7,445,221,439,218,433,215,427,425,211,419,417,207,411,409,203,202,401,399,396,197,49,389,387,385,383,95,189,47,187,93,185,23,183,91,181,45,179,89,177,11,175,87,173,345,343,341,339,337,21,167,83,331,329,327,163,81,323,321,319,159,79,315,313,39,155,309,307,153,305,303,151,75,299,149,37,295,147,73,291,145,289,287,143,285,71,141,281,35,279,139,69,275,137,273,17,271,135,269,267,133,265,33,263,131,261,130,259,129,257,1];
+        
+   
+var shg_table = [0,9,10,11,9,12,10,11,12,9,13,13,10,9,13,13,14,14,14,14,10,13,14,14,14,13,13,13,9,14,14,14,15,14,15,14,15,15,14,15,15,15,14,15,15,15,15,15,14,15,15,15,15,15,15,12,14,15,15,13,15,15,15,15,16,16,16,15,16,14,16,16,14,16,13,16,16,16,15,16,13,16,15,16,14,9,16,16,16,16,16,16,16,16,16,13,14,16,16,15,16,16,10,16,15,16,14,16,16,14,16,16,14,16,16,14,15,16,16,16,14,15,14,15,13,16,16,15,17,17,17,17,17,17,14,15,17,17,16,16,17,16,15,17,16,17,11,17,16,17,16,17,16,17,17,16,17,17,16,17,17,16,16,17,17,17,16,14,17,17,17,17,15,16,14,16,15,16,13,16,15,16,14,16,15,16,12,16,15,16,17,17,17,17,17,13,16,15,17,17,17,16,15,17,17,17,16,15,17,17,14,16,17,17,16,17,17,16,15,17,16,14,17,16,15,17,16,17,17,16,17,15,16,17,14,17,16,15,17,16,17,13,17,16,17,17,16,17,14,17,16,17,16,17,16,17,9
+];
+
+function stackBoxBlurImage( imageID, canvasID, radius, blurAlphaChannel, iterations )
+{
+      
+  var img = document.getElementById( imageID );
+  var w = img.naturalWidth;
+    var h = img.naturalHeight;
+       
+  var canvas = document.getElementById( canvasID );
+      
+    canvas.style.width  = w + "px";
+    canvas.style.height = h + "px";
+    canvas.width = w;
+    canvas.height = h;
+    
+    var context = canvas.getContext("2d");
+    context.clearRect( 0, 0, w, h );
+    context.drawImage( img, 0, 0 );
+
+  if ( isNaN(radius) || radius < 1 ) return;
+  
+  if ( blurAlphaChannel )
+    stackBoxBlurCanvasRGBA( canvasID, 0, 0, w, h, radius, iterations );
+  else 
+    stackBoxBlurCanvasRGB( canvasID, 0, 0, w, h, radius, iterations );
+}
+
+
+function stackBoxBlurCanvasRGBA( canvas, top_x, top_y, width, height, radius, iterations )
+{
+  if ( isNaN(radius) || radius < 1 ) return;
+  radius |= 0;
+  
+  if ( isNaN(iterations) ) iterations = 1;
+  iterations |= 0;
+  if ( iterations > 3 ) iterations = 3;
+  if ( iterations < 1 ) iterations = 1;
+  
+  var context = canvas.getContext("2d");
+  var imageData;
+  
+  try {
+    try {
+    imageData = context.getImageData( top_x, top_y, width, height );
+    } catch(e) {
+    
+    // NOTE: this part is supposedly only needed if you want to work with local files
+    // so it might be okay to remove the whole try/catch block and just use
+    // imageData = context.getImageData( top_x, top_y, width, height );
+    try {
+      netscape.security.PrivilegeManager.enablePrivilege("UniversalBrowserRead");
+      imageData = context.getImageData( top_x, top_y, width, height );
+    } catch(e) {
+      alert("Cannot access local image");
+      throw new Error("unable to access local image data: " + e);
+      return;
+    }
+    }
+  } catch(e) {
+    alert("Cannot access image");
+    throw new Error("unable to access image data: " + e);
+  }
+      
+  var pixels = imageData.data;
+      
+  var x, y, i, p, yp, yi, yw, r_sum, g_sum, b_sum, a_sum, 
+  r_out_sum, g_out_sum, b_out_sum, a_out_sum,
+  r_in_sum, g_in_sum, b_in_sum, a_in_sum, 
+  pr, pg, pb, pa, rbs;
+      
+  var div = radius + radius + 1;
+  var w4 = width << 2;
+  var widthMinus1  = width - 1;
+  var heightMinus1 = height - 1;
+  var radiusPlus1  = radius + 1;
+  
+  var stackStart = new BlurStack();
+  
+  var stack = stackStart;
+  for ( i = 1; i < div; i++ )
+  {
+    stack = stack.next = new BlurStack();
+    if ( i == radiusPlus1 ) var stackEnd = stack;
+  }
+  stack.next = stackStart;
+  var stackIn = null;
+  
+  
+  
+  var mul_sum = mul_table[radius];
+  var shg_sum = shg_table[radius];
+  while ( iterations-- > 0 ) {
+    yw = yi = 0;
+    for ( y = height; --y > -1; )
+    {
+      r_sum = radiusPlus1 * ( pr = pixels[yi] );
+      g_sum = radiusPlus1 * ( pg = pixels[yi+1] );
+      b_sum = radiusPlus1 * ( pb = pixels[yi+2] );
+      a_sum = radiusPlus1 * ( pa = pixels[yi+3] );
+      
+      stack = stackStart;
+      
+      for( i = radiusPlus1; --i > -1; )
+      {
+        stack.r = pr;
+        stack.g = pg;
+        stack.b = pb;
+        stack.a = pa;
+        stack = stack.next;
+      }
+      
+      for( i = 1; i < radiusPlus1; i++ )
+      {
+        p = yi + (( widthMinus1 < i ? widthMinus1 : i ) << 2 );
+        r_sum += ( stack.r = pixels[p]);
+        g_sum += ( stack.g = pixels[p+1]);
+        b_sum += ( stack.b = pixels[p+2]);
+        a_sum += ( stack.a = pixels[p+3]);
+        
+        stack = stack.next;
+      }
+      
+      stackIn = stackStart;
+      for ( x = 0; x < width; x++ )
+      {
+        pixels[yi++] = (r_sum * mul_sum) >>> shg_sum;
+        pixels[yi++] = (g_sum * mul_sum) >>> shg_sum;
+        pixels[yi++] = (b_sum * mul_sum) >>> shg_sum;
+        pixels[yi++] = (a_sum * mul_sum) >>> shg_sum;
+        
+        p =  ( yw + ( ( p = x + radius + 1 ) < widthMinus1 ? p : widthMinus1 ) ) << 2;
+        
+        r_sum -= stackIn.r - ( stackIn.r = pixels[p]);
+        g_sum -= stackIn.g - ( stackIn.g = pixels[p+1]);
+        b_sum -= stackIn.b - ( stackIn.b = pixels[p+2]);
+        a_sum -= stackIn.a - ( stackIn.a = pixels[p+3]);
+        
+        stackIn = stackIn.next;
+        
+      }
+      yw += width;
+    }
+
+    
+    for ( x = 0; x < width; x++ )
+    {
+      yi = x << 2;
+      
+      r_sum = radiusPlus1 * ( pr = pixels[yi]);
+      g_sum = radiusPlus1 * ( pg = pixels[yi+1]);
+      b_sum = radiusPlus1 * ( pb = pixels[yi+2]);
+      a_sum = radiusPlus1 * ( pa = pixels[yi+3]);
+      
+      stack = stackStart;
+      
+      for( i = 0; i < radiusPlus1; i++ )
+      {
+        stack.r = pr;
+        stack.g = pg;
+        stack.b = pb;
+        stack.a = pa;
+        stack = stack.next;
+      }
+      
+      yp = width;
+      
+      for( i = 1; i <= radius; i++ )
+      {
+        yi = ( yp + x ) << 2;
+        
+        r_sum += ( stack.r = pixels[yi]);
+        g_sum += ( stack.g = pixels[yi+1]);
+        b_sum += ( stack.b = pixels[yi+2]);
+        a_sum += ( stack.a = pixels[yi+3]);
+         
+        stack = stack.next;
+      
+        if( i < heightMinus1 )
+        {
+          yp += width;
+        }
+      }
+      
+      yi = x;
+      stackIn = stackStart;
+      for ( y = 0; y < height; y++ )
+      {
+        p = yi << 2;
+        pixels[p+3] = pa =(a_sum * mul_sum) >>> shg_sum;
+        if ( pa > 0 )
+        {
+          pa = 255 / pa;
+          pixels[p]   = ((r_sum * mul_sum) >>> shg_sum ) * pa; 
+          pixels[p+1] = ((g_sum * mul_sum) >>> shg_sum ) * pa;
+          pixels[p+2] = ((b_sum * mul_sum) >>> shg_sum ) * pa;
+        } else {
+          pixels[p] = pixels[p+1] = pixels[p+2] = 0
+        }
+        
+        p = ( x + (( ( p = y + radiusPlus1) < heightMinus1 ? p : heightMinus1 ) * width )) << 2;
+        
+        r_sum -= stackIn.r - ( stackIn.r = pixels[p]);
+        g_sum -= stackIn.g - ( stackIn.g = pixels[p+1]);
+        b_sum -= stackIn.b - ( stackIn.b = pixels[p+2]);
+        a_sum -= stackIn.a - ( stackIn.a = pixels[p+3]);
+         
+        stackIn = stackIn.next;
+        
+        yi += width;
+      }
+    }
+  }
+  context.putImageData( imageData, top_x, top_y );
+  
+}
+
+
+function stackBoxBlurCanvasRGB( id, top_x, top_y, width, height, radius, iterations )
+{
+  if ( isNaN(radius) || radius < 1 ) return;
+  radius |= 0;
+  
+  if ( isNaN(iterations) ) iterations = 1;
+  iterations |= 0;
+  if ( iterations > 3 ) iterations = 3;
+  if ( iterations < 1 ) iterations = 1;
+  
+  var canvas  = document.getElementById( id );
+  var context = canvas.getContext("2d");
+  var imageData;
+  
+  try {
+    try {
+    imageData = context.getImageData( top_x, top_y, width, height );
+    } catch(e) {
+    
+    // NOTE: this part is supposedly only needed if you want to work with local files
+    // so it might be okay to remove the whole try/catch block and just use
+    // imageData = context.getImageData( top_x, top_y, width, height );
+    try {
+      netscape.security.PrivilegeManager.enablePrivilege("UniversalBrowserRead");
+      imageData = context.getImageData( top_x, top_y, width, height );
+    } catch(e) {
+      alert("Cannot access local image");
+      throw new Error("unable to access local image data: " + e);
+      return;
+    }
+    }
+  } catch(e) {
+    alert("Cannot access image");
+    throw new Error("unable to access image data: " + e);
+  }
+      
+  var pixels = imageData.data;
+      
+  var x, y, i, p, yp, yi, yw, r_sum, g_sum, b_sum,
+  r_out_sum, g_out_sum, b_out_sum,
+  r_in_sum, g_in_sum, b_in_sum,
+  pr, pg, pb, rbs;
+      
+  var div = radius + radius + 1;
+  var w4 = width << 2;
+  var widthMinus1  = width - 1;
+  var heightMinus1 = height - 1;
+  var radiusPlus1  = radius + 1;
+  
+  var stackStart = new BlurStack();
+  var stack = stackStart;
+  for ( i = 1; i < div; i++ )
+  {
+    stack = stack.next = new BlurStack();
+    if ( i == radiusPlus1 ) var stackEnd = stack;
+  }
+  stack.next = stackStart;
+  var stackIn = null;
+  
+  
+  
+  var mul_sum = mul_table[radius];
+  var shg_sum = shg_table[radius];
+  
+  while ( iterations-- > 0 ) {
+    yw = yi = 0;
+    
+    for ( y = height; --y >-1; )
+    {
+      r_sum = radiusPlus1 * ( pr = pixels[yi] );
+      g_sum = radiusPlus1 * ( pg = pixels[yi+1] );
+      b_sum = radiusPlus1 * ( pb = pixels[yi+2] );
+      
+      stack = stackStart;
+      
+      for( i = radiusPlus1; --i > -1; )
+      {
+        stack.r = pr;
+        stack.g = pg;
+        stack.b = pb;
+        stack = stack.next;
+      }
+      
+      for( i = 1; i < radiusPlus1; i++ )
+      {
+        p = yi + (( widthMinus1 < i ? widthMinus1 : i ) << 2 );
+        r_sum += ( stack.r = pixels[p++]);
+        g_sum += ( stack.g = pixels[p++]);
+        b_sum += ( stack.b = pixels[p]);
+        
+        stack = stack.next;
+      }
+      
+      stackIn = stackStart;
+      for ( x = 0; x < width; x++ )
+      {
+        pixels[yi++] = (r_sum * mul_sum) >>> shg_sum;
+        pixels[yi++] = (g_sum * mul_sum) >>> shg_sum;
+        pixels[yi++] = (b_sum * mul_sum) >>> shg_sum;
+        yi++;
+        
+        p =  ( yw + ( ( p = x + radius + 1 ) < widthMinus1 ? p : widthMinus1 ) ) << 2;
+        
+        r_sum -= stackIn.r - ( stackIn.r = pixels[p++]);
+        g_sum -= stackIn.g - ( stackIn.g = pixels[p++]);
+        b_sum -= stackIn.b - ( stackIn.b = pixels[p]);
+        
+        stackIn = stackIn.next;
+      }
+      yw += width;
+    }
+
+    
+    for ( x = 0; x < width; x++ )
+    {
+      yi = x << 2;
+      
+      r_sum = radiusPlus1 * ( pr = pixels[yi++]);
+      g_sum = radiusPlus1 * ( pg = pixels[yi++]);
+      b_sum = radiusPlus1 * ( pb = pixels[yi]);
+      
+      stack = stackStart;
+      
+      for( i = 0; i < radiusPlus1; i++ )
+      {
+        stack.r = pr;
+        stack.g = pg;
+        stack.b = pb;
+        stack = stack.next;
+      }
+      
+      yp = width;
+      
+      for( i = 1; i <= radius; i++ )
+      {
+        yi = ( yp + x ) << 2;
+        
+        r_sum += ( stack.r = pixels[yi++]);
+        g_sum += ( stack.g = pixels[yi++]);
+        b_sum += ( stack.b = pixels[yi]);
+        
+        stack = stack.next;
+      
+        if ( i < heightMinus1 ) yp += width;
+      }
+      
+      yi = x;
+      stackIn = stackStart;
+      for ( y = 0; y < height; y++ )
+      {
+        p = yi << 2;
+        pixels[p]   = (r_sum * mul_sum) >>> shg_sum;
+        pixels[p+1] = (g_sum * mul_sum) >>> shg_sum;
+        pixels[p+2] = (b_sum * mul_sum) >>> shg_sum;
+        
+        p = ( x + (( ( p = y + radiusPlus1) < heightMinus1 ? p : heightMinus1 ) * width )) << 2;
+        
+        r_sum -= stackIn.r - ( stackIn.r = pixels[p]);
+        g_sum -= stackIn.g - ( stackIn.g = pixels[p+1]);
+        b_sum -= stackIn.b - ( stackIn.b = pixels[p+2]);
+        
+        stackIn = stackIn.next;
+        
+        yi += width;
+      }
+    }
+  }
+  context.putImageData( imageData, top_x, top_y );
+  
+}
+
+function BlurStack()
+{
+  this.r = 0;
+  this.g = 0;
+  this.b = 0;
+  this.a = 0;
+  this.next = null;
+}
+
+exports.blur = stackBoxBlurCanvasRGBA;
+},{}],2:[function(require,module,exports){
 var $h = require("./head-on");
 
 module.exports = (function(){
@@ -243,7 +689,7 @@ module.exports = (function(){
    return Entity;
 }());
 
-},{"./head-on":4}],2:[function(require,module,exports){
+},{"./head-on":5}],3:[function(require,module,exports){
 var $h = require("./head-on");
 var Entity = require("./entity");
 var mouse = require("./mouse");
@@ -359,8 +805,8 @@ entities.push(
   new Entity(70, 150, 20, 20, "grey"),
   new Entity(70, 150, 20, 20, "grey")
 );
-entities[2].max_velocity = 300;
-entities[2].viewDistance = 300;
+// entities[2].max_velocity = 300;
+// entities[2].viewDistance = 300;
 $h.gamestate = {units:entities};
 $h.gamestate.canvasMouse = canvasMouse;
 $h.gamestate.box = box;
@@ -427,10 +873,10 @@ canvasMouse.listen("leftMouseDown", function(coords, button){
       c.y = (camera.height/2);
     }
     camera.moveTo(c);
-    minimapClick = true;
+    $h.gamestate.minimapClick = true;
   }else{
     coords = camera.project(coords);
-    minimapClick = false;
+    $h.gamestate.minimapClick = false;
   }
 	$h.gamestate.startPoint = startPoint = coords;
 	$h.gamestate.draging = draging = true;
@@ -465,7 +911,7 @@ canvasMouse.listen("drag", function(coords){
 });
 canvasMouse.listen("mouseUp", function(coords, button){
   coords = camera.project(coords);
-	if(button === 1 && !minimapClick){
+	if(button === 1 && !$h.gamestate.minimapClick){
 		selectEntitiesInSelection(box);
     if(!selectedEntities.units.length){
       entities.forEach(function(dude){
@@ -477,6 +923,7 @@ canvasMouse.listen("mouseUp", function(coords, button){
     }
 	}
 	draging = false;
+  $h.gamestate.minimapClick = false;
 	$h.gamestate.startPoint = startPoint = {};
 	$h.gamestate.box = box = {};
 });
@@ -597,21 +1044,28 @@ function clone(obj) {
 
 
 
-},{"./entity":1,"./gamestates":3,"./head-on":4,"./keys":5,"./mapTools":6,"./maps":7,"./mouse":8}],3:[function(require,module,exports){
+},{"./entity":2,"./gamestates":4,"./head-on":5,"./keys":6,"./mapTools":7,"./maps":8,"./mouse":9}],4:[function(require,module,exports){
 var $h = require("./head-on");
 var drawMap = require("./mapTools").drawMap;
 var getTile = require("./mapTools").getTile;
 var map = require("./maps").one;
+var blur = require("./blur").blur;
 var percent = 0;
+
 $h.events.listen("imagesLoadProgess", function(loaded, total){
   percent = (loaded/total);
 });
 exports.loadState = {
   update: function(entity){
     if($h.imagesLoaded){
-      setTimeout(function(){
-        entity.changeState(exports.gamePlay); 
-      },2000);
+      if(!this.done){
+        setTimeout(function(){
+          console.log("getting out of loading");
+          entity.changeState(exports.gamePlay); 
+        },2000);
+      }
+     
+      this.done = true;
          
     }
   },
@@ -637,6 +1091,7 @@ exports.gamePlay = {
       dude.update(delta);
     });
     if($h.paused){
+      console.log("pauses are killing me?");
       entity.changeState(exports.pausedState);
     }
     var scrollx  = 10;
@@ -684,7 +1139,9 @@ exports.gamePlay = {
     var fow = $h.canvas("FoW");
     c.clear();
     m.clear();
-    if(scroll || minimapClick){
+    if(this.camMoved){
+      this.camMoved = false;
+      console.log("how often am I being called?", $h.gamestate.minimapClick);
       background.clear();
       drawMap(background, map, camera);
       //scroll = false;
@@ -716,20 +1173,32 @@ exports.gamePlay = {
       dude.render(c);
       dude.minimapRender(m);
       var tile = getTile(dude, map);
+      this.grd = fow.createGradient({
+        type:"radial",
+        start: dude.position,
+        end:dude.position,
+        radius1:90,
+        radius2:100,
+      });
+      this.grd.addColorStop(0, "white");
+      this.grd.addColorStop(0.98, "transparent");
       //clipArc(fow.canvas.ctx, dude.position.x,dude.position.y, dude.viewDistance, 40);
-      fow.drawRect(100,100, dude.position.x-50,dude.position.y-50, "white");
-      $h.canvas("darkness").drawRect({
-        width:100,
-        height:100, 
-        x:dude.position.x-50,
-        y:dude.position.y-50, 
-        color:"white",
+      //fow.drawCircle(dude.position.x,dude.position.y,100, "white");
+      
+      
+      
+      $h.canvas("darkness").drawCircle({
+        radius:100, 
+        x:dude.position.x,
+        y:dude.position.y, 
+        color:"red",
         camera:false
       });
     });
     
     fow.canvas.ctx.restore();
-    fow.canvas.ctx.drawImage($h.canvas("darkness").canvas.canvas, camera.position.x, camera.position.y, camera.width, camera.height, 0,0, 1000, 600);
+    //blur($h.canvas("FoW").canvas.canvas, 0,0, 1000,1000, 200, 1);
+    //fow.canvas.ctx.drawImage($h.canvas("darkness").canvas.canvas, camera.position.x, camera.position.y, camera.width, camera.height, 0,0, 1000, 600);
     m.canvas.ctx.drawImage($h.canvas("darkness").canvas.canvas, 0, 0, 4000, 4000, 0,0, 200, 200);
     m.drawRect(camera.width, camera.height, camera.position.x, camera.position.y, "transparent", {width:2, color:"white"});
     m.drawRect({
@@ -752,14 +1221,21 @@ exports.gamePlay = {
     fg.drawImage($h.images("cursor"), mos.x, mos.y);
   },
   exit:function(){
-
+    $h.events.unlisten("cameraMoved", this.event);
   },
   enter: function(){
-
+    this.called = this.called || 0;
     var camera = $h.canvas("main").canvas.camera;
     var background = $h.canvas("background");
+    var that = this;
+    this.event = $h.events.listen("cameraMoved", function(cam){
+      if(camera === cam){
+        that.camMoved = true;
+      }
+    });
     $h.gamestate.canvasMouse.unpause();
     background.clear();
+    console.log(this.called++);
     drawMap(background, map, camera);
   }
 };
@@ -812,7 +1288,7 @@ exports.pausedState = {
 //     ctx.drawImage(temp, 0, 0);
 //     ctx.restore();
 // }
-},{"./head-on":4,"./mapTools":6,"./maps":7}],4:[function(require,module,exports){
+},{"./blur":1,"./head-on":5,"./mapTools":7,"./maps":8}],5:[function(require,module,exports){
 //     __  __         __           _
 //    / / / /__  ____ _____/ /  ____  ____         (_)____
 //   / /_/ / _ \/ __ `/ __  /_____/ __ \/ __ \    / / ___/
@@ -843,12 +1319,20 @@ exports.pausedState = {
         events: {
           events: {},
           listen: function(eventName, callback){
+            var id = headOn.uId();
             if(!this.events[eventName]){
               this.events[eventName] = [];
             }
-            this.events[eventName].push(callback);
+            this.events[eventName].push({cb:callback, id:id});
           },
-
+          unlisten:function(eventName, id){
+            if(!this.events[eventName]) return;
+            this.events[eventName].forEach(function(e, i){
+              if(e.id === id){
+                this.events[eventName].splice(i,1);
+              }
+            });
+          },
           trigger: function(eventName){
             var args = [].splice.call(arguments, 1),
               e = this.events[eventName],
@@ -857,11 +1341,16 @@ exports.pausedState = {
             if(e){
               l = e.length;
               for(i = 0; i < l; i++){
-                e[i].apply(headOn, args);
+                e[i].cb.apply(headOn, args);
               }
             }
 
           }
+        },
+        uId: function s4() {
+            return Math.floor((1 + Math.random()) * 0x10000)
+               .toString(16)
+               .substring(1);
         },
         FSM: function(entity){
           this.entity = entity;
@@ -1403,10 +1892,25 @@ exports.pausedState = {
         return this;
       },
       drawCircle: function(x, y, radius, color, stroke){
-        var ctx = this.canvas.ctx, camera = this.canvas.camera;
+        var ctx = this.canvas.ctx, mod = 1, camera = this.canvas.camera, oneArg;
+        if(arguments.length === 1 && typeof arguments[0] === "object"){
+          oneArg = true;
+          x=arguments[0].x;
+          y=arguments[0].y;
+          radius=arguments[0].radius;
+          color = arguments[0].color;
+          stroke = arguments[0].stroke;
+        }
+        
         ctx.save();
         ctx.beginPath();
-        ctx.arc((x - camera.position.x)/camera.zoomAmt, (y - camera.position.y)/camera.zoomAmt, radius / camera.zoomAmt, 0, 2*Math.PI, false);
+        if(oneArg && arguments[0].camera === false){
+          ctx.arc(x, y, radius, 0, 2*Math.PI, false);
+        }else{
+
+          ctx.arc((x - camera.position.x)/camera.zoomAmt, (y - camera.position.y)/camera.zoomAmt, radius / camera.zoomAmt, 0, 2*Math.PI, false);
+        }
+        
         ctx.fillStyle = color || "black";
         ctx.fill();
         this.stroke(stroke);
@@ -1449,7 +1953,26 @@ exports.pausedState = {
         ctx.restore();
         return this;
       },
-
+      createGradient: function(options){
+        var grd;
+        var ctx = this.canvas.ctx;
+        var camera = this.canvas.camera;
+        var start;
+        var end;
+        if(options.camera !== false){
+          start = camera.unproject(options.start);
+          end = camera.unproject(options.end);
+        }else{
+          start = options.start;
+          end = options.end;
+        }
+        if(options.type === "radial"){
+          return ctx.createRadialGradient(start.x, start.y, options.radius1, end.x, end.y, options.radius2);
+        }else{
+          return ctx.createLinearGradient(start.x, start.y, end.x, end.y);
+        }
+        
+      },
       drawText: function(textString, x, y, fontStyle, color, alignment, baseline){
         var ctx = this.canvas.ctx;
         ctx.save();
@@ -1549,6 +2072,7 @@ exports.pausedState = {
       move: function(vec){
         this.position = this.position.add(vec);
         this.center = this.position.add(headOn.Vector(this.width, this.height).mul(0.5));
+        headOn.events.trigger("cameraMoved", this);
         return this;
       },
       inView: function(vec){
@@ -1560,13 +2084,14 @@ exports.pausedState = {
       },
       moveTo: function(vec){
         this.position = vec.sub(this.dimensions.mul(0.5).mul(this.zoomAmt));
+        headOn.events.trigger("cameraMoved", this);
         this.center = vec;
       },
       project: function(vec){
         return vec.mul(this.zoomAmt).add(this.position);
       },
       unproject: function(vec){
-        return vec.sub(this.position);
+        return vec.mul(1/this.zoomAmt).sub(this.position);
       }
     };
     headOn.Vector.prototype = {
@@ -1632,7 +2157,7 @@ exports.pausedState = {
   window.headOn = headOn;
 })(window);
 
-},{}],5:[function(require,module,exports){
+},{}],6:[function(require,module,exports){
 var $h = require("./head-on");
 $h.keys = {};
 addEventListener("keydown", function(e){
@@ -1648,7 +2173,7 @@ addEventListener("keyup", function(e){
     }
   }
 });
-},{"./head-on":4}],6:[function(require,module,exports){
+},{"./head-on":5}],7:[function(require,module,exports){
 var $h = require("./head-on");
 exports.genMap = function genMap(width, height, tileW, tileH){
   var rows = height/tileH;
@@ -1676,39 +2201,44 @@ exports.getTile = function(entity, map){
   return tile;
 };
 exports.drawMap = function drawMap(canvas, map, camera){
+
   var tileColor ={
     1:"#777CC9",
     0:"#8045BF"
   };
+  var startx = Math.floor(camera.position.x * camera.zoomAmt/map.tileWidth);
+  var starty = Math.floor(camera.position.y/map.tileHeight);
+  var endx = Math.ceil((camera.position.x + camera.width*camera.zoomAmt )/map.tileWidth);
+  var endy = Math.ceil((camera.position.y + camera.height*camera.zoomAmt)/map.tileHeight);
   var tiles = map.map;
   var topleft = {x:0,y:0};
   var topright = {x:0,y:0};
   var botleft = {x:0,y:0};
   var botright = {x:0, y:0};
-  for(var y = 0; y < tiles.length; y++){
+  for(var y = starty; y < endy; y++){
     topleft.y = y*map.tileHeight;
     topright.y = topleft.y;
     botleft.y = y*map.tileHeight + map.tileHeight;
     botright.y = botleft.y;
-    for(var x = 0; x<tiles[y].length; x++){
+    for(var x = startx; x<endx; x++){
       if(tiles[y][x] === 0 || tiles[y][x] === 1){
         topleft.x = x*map.tileWidth;
         topright.x = x*map.tileWidth + map.tileWidth;
         botleft.x = topleft.x;
         botright.x = topright.x;
-          if(camera.inView(topleft) ||
-            camera.inView(topright) ||
-            camera.inView(botleft) ||
-            camera.inView(botright)
-            ){
+          // if(camera.inView(topleft) ||
+          //   camera.inView(topright) ||
+          //   camera.inView(botleft) ||
+          //   camera.inView(botright)
+          //   ){
             canvas.drawRect(map.tileWidth, map.tileHeight, x*map.tileWidth, y*map.tileHeight, tileColor[tiles[y][x]]);
-          }
+          // }
       }
     }
   }
 }
 ;
-},{"./head-on":4}],7:[function(require,module,exports){
+},{"./head-on":5}],8:[function(require,module,exports){
 var genMap = require("./mapTools").genMap;
 exports.one = {
   width:4000,
@@ -1717,7 +2247,7 @@ exports.one = {
   tileHeight:20,
   map:genMap(4000,4000,20,20)
 };
-},{"./mapTools":6}],8:[function(require,module,exports){
+},{"./mapTools":7}],9:[function(require,module,exports){
 //Setup event listeners for the mouse
 var $h = require("./head-on");
 module.exports = function(obj, camera){
@@ -1843,4 +2373,4 @@ module.exports = function(obj, camera){
 
 };
 
-},{"./head-on":4}]},{},[2])
+},{"./head-on":5}]},{},[3])

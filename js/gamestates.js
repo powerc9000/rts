@@ -2,16 +2,23 @@ var $h = require("./head-on");
 var drawMap = require("./mapTools").drawMap;
 var getTile = require("./mapTools").getTile;
 var map = require("./maps").one;
+var blur = require("./blur").blur;
 var percent = 0;
+
 $h.events.listen("imagesLoadProgess", function(loaded, total){
   percent = (loaded/total);
 });
 exports.loadState = {
   update: function(entity){
     if($h.imagesLoaded){
-      setTimeout(function(){
-        entity.changeState(exports.gamePlay); 
-      },2000);
+      if(!this.done){
+        setTimeout(function(){
+          console.log("getting out of loading");
+          entity.changeState(exports.gamePlay); 
+        },2000);
+      }
+     
+      this.done = true;
          
     }
   },
@@ -37,6 +44,7 @@ exports.gamePlay = {
       dude.update(delta);
     });
     if($h.paused){
+      console.log("pauses are killing me?");
       entity.changeState(exports.pausedState);
     }
     var scrollx  = 10;
@@ -84,7 +92,9 @@ exports.gamePlay = {
     var fow = $h.canvas("FoW");
     c.clear();
     m.clear();
-    if(scroll || minimapClick){
+    if(this.camMoved){
+      this.camMoved = false;
+      console.log("how often am I being called?", $h.gamestate.minimapClick);
       background.clear();
       drawMap(background, map, camera);
       //scroll = false;
@@ -116,20 +126,32 @@ exports.gamePlay = {
       dude.render(c);
       dude.minimapRender(m);
       var tile = getTile(dude, map);
+      this.grd = fow.createGradient({
+        type:"radial",
+        start: dude.position,
+        end:dude.position,
+        radius1:90,
+        radius2:100,
+      });
+      this.grd.addColorStop(0, "white");
+      this.grd.addColorStop(0.98, "transparent");
       //clipArc(fow.canvas.ctx, dude.position.x,dude.position.y, dude.viewDistance, 40);
-      fow.drawRect(100,100, dude.position.x-50,dude.position.y-50, "white");
-      $h.canvas("darkness").drawRect({
-        width:100,
-        height:100, 
-        x:dude.position.x-50,
-        y:dude.position.y-50, 
-        color:"white",
+      //fow.drawCircle(dude.position.x,dude.position.y,100, "white");
+      
+      
+      
+      $h.canvas("darkness").drawCircle({
+        radius:100, 
+        x:dude.position.x,
+        y:dude.position.y, 
+        color:"red",
         camera:false
       });
     });
     
     fow.canvas.ctx.restore();
-    fow.canvas.ctx.drawImage($h.canvas("darkness").canvas.canvas, camera.position.x, camera.position.y, camera.width, camera.height, 0,0, 1000, 600);
+    //blur($h.canvas("FoW").canvas.canvas, 0,0, 1000,1000, 200, 1);
+    //fow.canvas.ctx.drawImage($h.canvas("darkness").canvas.canvas, camera.position.x, camera.position.y, camera.width, camera.height, 0,0, 1000, 600);
     m.canvas.ctx.drawImage($h.canvas("darkness").canvas.canvas, 0, 0, 4000, 4000, 0,0, 200, 200);
     m.drawRect(camera.width, camera.height, camera.position.x, camera.position.y, "transparent", {width:2, color:"white"});
     m.drawRect({
@@ -152,14 +174,21 @@ exports.gamePlay = {
     fg.drawImage($h.images("cursor"), mos.x, mos.y);
   },
   exit:function(){
-
+    $h.events.unlisten("cameraMoved", this.event);
   },
   enter: function(){
-
+    this.called = this.called || 0;
     var camera = $h.canvas("main").canvas.camera;
     var background = $h.canvas("background");
+    var that = this;
+    this.event = $h.events.listen("cameraMoved", function(cam){
+      if(camera === cam){
+        that.camMoved = true;
+      }
+    });
     $h.gamestate.canvasMouse.unpause();
     background.clear();
+    console.log(this.called++);
     drawMap(background, map, camera);
   }
 };

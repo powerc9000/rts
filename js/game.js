@@ -113,8 +113,8 @@ entities.push(
   new Entity(70, 150, 20, 20, "grey"),
   new Entity(70, 150, 20, 20, "grey")
 );
-entities[2].max_velocity = 300;
-entities[2].viewDistance = 300;
+// entities[2].max_velocity = 300;
+// entities[2].viewDistance = 300;
 $h.gamestate = {units:entities};
 $h.gamestate.canvasMouse = canvasMouse;
 $h.gamestate.box = box;
@@ -181,10 +181,10 @@ canvasMouse.listen("leftMouseDown", function(coords, button){
       c.y = (camera.height/2);
     }
     camera.moveTo(c);
-    minimapClick = true;
+    $h.gamestate.minimapClick = true;
   }else{
     coords = camera.project(coords);
-    minimapClick = false;
+    $h.gamestate.minimapClick = false;
   }
 	$h.gamestate.startPoint = startPoint = coords;
 	$h.gamestate.draging = draging = true;
@@ -219,7 +219,7 @@ canvasMouse.listen("drag", function(coords){
 });
 canvasMouse.listen("mouseUp", function(coords, button){
   coords = camera.project(coords);
-	if(button === 1 && !minimapClick){
+	if(button === 1 && !$h.gamestate.minimapClick){
 		selectEntitiesInSelection(box);
     if(!selectedEntities.units.length){
       entities.forEach(function(dude){
@@ -231,6 +231,7 @@ canvasMouse.listen("mouseUp", function(coords, button){
     }
 	}
 	draging = false;
+  $h.gamestate.minimapClick = false;
 	$h.gamestate.startPoint = startPoint = {};
 	$h.gamestate.box = box = {};
 });

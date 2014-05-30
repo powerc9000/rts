@@ -135,7 +135,7 @@ exports.gamePlay = {
       this.grd.addColorStop(0, "white");
       this.grd.addColorStop(0.98, "transparent");
       //clipArc(fow.canvas.ctx, dude.position.x,dude.position.y, dude.viewDistance, 40);
-      fow.drawCircle(dude.position.x,dude.position.y,100, "white");
+      fow.drawCircle(dude.position.x,dude.position.y,100, grd);
       
       
       

@@ -705,8 +705,8 @@ var scroll = true;
 var inputBox = document.createElement("input");
 var checkbox = document.createElement("input");
 var minicam = new $h.Camera(200,200);
-var minimap = $h.canvas.create("minimap",200,200, minicam);
-var minimapBG = $h.canvas.create("minibg", 200,200, minicam);
+var minimap;
+var minimapBG;
 var entities = [];
 var selectedEntities = {
   units:[],
@@ -738,12 +738,22 @@ var gameState = {
     this.state.render(this);
   }
 };
-$h.canvas.create("master", 1000, 600, camera);
-$h.canvas.create("background", 1000, 600, camera);
-$h.canvas.create("foreground", 1000, 600, camera);
-$h.canvas.create("FoW", 1000, 600, camera);
-$h.canvas.create("darkness", map.width, map.height, camera);
-
+var styles = {position:"absolute"};
+minimap = $h.canvas.create("minimap",200,200, minicam, styles);
+minimapBG = $h.canvas.create("minibg", 200,200, minicam, styles);
+$h.canvas.create("small", 200,200, minicam,styles);
+$h.canvas.create("master", 1000, 600, camera, styles).append("#container").canvas.canvas.style["z-index"] = -1;
+$h.canvas.create("background", 1000, 600, camera, styles).append("#container").canvas.canvas.style["z-index"] = 1;
+$h.canvas.create("FoW", 1000, 600, camera, styles).append("#container").canvas.canvas.style["z-index"] = 3;
+$h.canvas.create("darkness", map.width, map.height, camera, styles).append("#container").canvas.canvas.style["z-index"] = 4;
+$h.canvas.create("foreground", 1000, 600, camera, styles).append("#container").canvas.canvas.style["z-index"] = 7;
+$h.canvas.create("main", 1000, 600, camera, styles).append("#container").canvas.canvas.style["z-index"] = 2;
+minimap.append("#container").canvas.canvas.style["z-index"] = 6;
+minimapBG.append("#container").canvas.canvas.style["z-index"] = 5;
+minimap.canvas.canvas.style.top = 400;
+minimap.canvas.canvas.style.left = 800;
+minimapBG.canvas.canvas.style.top = 400;
+minimapBG.canvas.canvas.style.left = 800;
 $h.canvas("darkness").drawRect({
   x:0,
   y:0,
@@ -752,18 +762,19 @@ $h.canvas("darkness").drawRect({
   camera:false,
   color:"black"
 });
+console.log($h.canvas("darkness"));
 $h.canvas("darkness").canvas.ctx.globalCompositeOperation = "destination-out";
 background = $h.canvas("background");
 //background.append("#container");
 inputBox = document.body.appendChild(inputBox);
 checkbox = document.body.appendChild(checkbox);
 checkbox.type = "checkbox";
-$h.canvas.create("main", 1000, 600, camera);
-canvasMouse = mouse($h.canvas("master").canvas.canvas, camera);
+
+canvasMouse = mouse($h.canvas("foreground").canvas.canvas, camera);
 minimapMouse = mouse($h.canvas("minimap").canvas.canvas, minicam);
 
 
-$h.canvas("master").append("body");
+//$h.canvas("master").append("body");
 //$h.canvas("main").append("#container");
 //$h.canvas("minimap").append("body");
 //$h.canvas("main").canvas.canvas.style.border = "1px black solid";
@@ -950,11 +961,11 @@ $h.render(function(){
 	gameState.render();
   zero = camera.project($h.Vector(0,0));
   master.clear();
-  master.drawImage(background.canvas.canvas, zero.x, zero.y);
-  master.drawImage(c.canvas.canvas, zero.x, zero.y);
-  master.drawImage($h.canvas("FoW").canvas.canvas, zero.x, zero.y);
-  master.drawImage(m.canvas.canvas, zero.x + 800, zero.y + 400);
-  master.drawImage(fg.canvas.canvas, zero.x, zero.y);
+  // master.drawImage(background.canvas.canvas, zero.x, zero.y);
+  // master.drawImage(c.canvas.canvas, zero.x, zero.y);
+  // master.drawImage($h.canvas("FoW").canvas.canvas, zero.x, zero.y);
+  // master.drawImage(m.canvas.canvas, zero.x + 800, zero.y + 400);
+  // master.drawImage(fg.canvas.canvas, zero.x, zero.y);
   
 
 });
@@ -1070,7 +1081,7 @@ exports.loadState = {
     }
   },
   render:function(){
-    var background = $h.canvas("background");
+    var background = $h.canvas("foreground");
     background.clear();
     background.drawRect({
       x:0,
@@ -1143,6 +1154,8 @@ exports.gamePlay = {
       this.camMoved = false;
       background.clear();
       drawMap(background, map, camera);
+      $h.canvas("darkness").canvas.canvas.style.top = -camera.position.y;
+      $h.canvas("darkness").canvas.canvas.style.left = -camera.position.x;
       //scroll = false;
     }
     m.drawRect({
@@ -1196,9 +1209,12 @@ exports.gamePlay = {
     });
     
     fow.canvas.ctx.restore();
+    //$h.canvas("small").canvas.ctx.drawImage($h.canvas("darkness").canvas.canvas, 0, 0, 4000/4, 4000/4);
     //blur($h.canvas("FoW").canvas.canvas, 0,0, 1000,1000, 200, 1);
-    fow.canvas.ctx.drawImage($h.canvas("darkness").canvas.canvas, camera.position.x, camera.position.y, camera.width, camera.height, 0,0, 1000, 600);
-    m.canvas.ctx.drawImage($h.canvas("darkness").canvas.canvas, 0, 0, 4000, 4000, 0,0, 200, 200);
+    //fow.canvas.ctx.drawImage($h.canvas("darkness").canvas.canvas, camera.position.x, camera.position.y, camera.width, camera.height, 0,0, 1000, 600);
+    //if(++this.frames % 10 === 0){
+    //m.canvas.ctx.drawImage($h.canvas("small").canvas.canvas, 0, 0, 200, 200);
+    //}
     m.drawRect(camera.width, camera.height, camera.position.x, camera.position.y, "transparent", {width:2, color:"white"});
     m.drawRect({
       x:0,
@@ -1223,6 +1239,7 @@ exports.gamePlay = {
     $h.events.unlisten("cameraMoved", this.event);
   },
   enter: function(){
+    this.frames = 0;
     this.called = this.called || 0;
     var camera = $h.canvas("main").canvas.camera;
     var background = $h.canvas("background");
@@ -1234,7 +1251,7 @@ exports.gamePlay = {
     });
     $h.gamestate.canvasMouse.unpause();
     background.clear();
-    console.log(this.called++);
+    //console.log(this.called++);
     drawMap(background, map, camera);
   }
 };
@@ -1818,7 +1835,7 @@ exports.pausedState = {
         }
     };
 
-    headOn.canvas.create = function(name, width, height, camera){
+    headOn.canvas.create = function(name, width, height, camera, styles){
       var canvas, ctx;
       if(!camera || !(camera instanceof headOn.Camera)){
         throw new headOn.exception("Canvas must be intialized with a camera");
@@ -1826,6 +1843,14 @@ exports.pausedState = {
       canvas = document.createElement("canvas");
       canvas.width = width;
       canvas.height = height;
+      if(styles){
+        for(var key in styles){
+          if(styles.hasOwnProperty(key)){
+            canvas.style[key] = styles[key];
+          }
+        }
+      }
+
       ctx = canvas.getContext("2d");
       this.prototype.canvases[name] = {
         canvas: canvas,
@@ -1834,6 +1859,7 @@ exports.pausedState = {
         height: canvas.height,
         camera: camera
       };
+      return headOn.canvas(name);
     };
     headOn.canvas.prototype = {
       canvases: {},
@@ -1998,10 +2024,10 @@ exports.pausedState = {
       append: function(element){
         element = document.querySelector(element);
         if(element){
-          element.appendChild(this.canvas.canvas);
+          this.canvas.canvas = element.appendChild(this.canvas.canvas);
         }
         else{
-          document.body.appendChild(this.canvas.canvas);
+          this.canvas.canvas = document.body.appendChild(this.canvas.canvas);
         }
         return this;
       },

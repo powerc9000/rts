@@ -528,7 +528,7 @@
         }
     };
 
-    headOn.canvas.create = function(name, width, height, camera){
+    headOn.canvas.create = function(name, width, height, camera, styles){
       var canvas, ctx;
       if(!camera || !(camera instanceof headOn.Camera)){
         throw new headOn.exception("Canvas must be intialized with a camera");
@@ -536,6 +536,14 @@
       canvas = document.createElement("canvas");
       canvas.width = width;
       canvas.height = height;
+      if(styles){
+        for(var key in styles){
+          if(styles.hasOwnProperty(key)){
+            canvas.style[key] = styles[key];
+          }
+        }
+      }
+
       ctx = canvas.getContext("2d");
       this.prototype.canvases[name] = {
         canvas: canvas,
@@ -544,6 +552,7 @@
         height: canvas.height,
         camera: camera
       };
+      return headOn.canvas(name);
     };
     headOn.canvas.prototype = {
       canvases: {},
@@ -708,10 +717,10 @@
       append: function(element){
         element = document.querySelector(element);
         if(element){
-          element.appendChild(this.canvas.canvas);
+          this.canvas.canvas = element.appendChild(this.canvas.canvas);
         }
         else{
-          document.body.appendChild(this.canvas.canvas);
+          this.canvas.canvas = document.body.appendChild(this.canvas.canvas);
         }
         return this;
       },

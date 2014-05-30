@@ -23,7 +23,7 @@ exports.loadState = {
     }
   },
   render:function(){
-    var background = $h.canvas("background");
+    var background = $h.canvas("foreground");
     background.clear();
     background.drawRect({
       x:0,
@@ -96,6 +96,8 @@ exports.gamePlay = {
       this.camMoved = false;
       background.clear();
       drawMap(background, map, camera);
+      $h.canvas("darkness").canvas.canvas.style.top = -camera.position.y;
+      $h.canvas("darkness").canvas.canvas.style.left = -camera.position.x;
       //scroll = false;
     }
     m.drawRect({
@@ -149,9 +151,12 @@ exports.gamePlay = {
     });
     
     fow.canvas.ctx.restore();
+    //$h.canvas("small").canvas.ctx.drawImage($h.canvas("darkness").canvas.canvas, 0, 0, 4000/4, 4000/4);
     //blur($h.canvas("FoW").canvas.canvas, 0,0, 1000,1000, 200, 1);
-    fow.canvas.ctx.drawImage($h.canvas("darkness").canvas.canvas, camera.position.x, camera.position.y, camera.width, camera.height, 0,0, 1000, 600);
-    m.canvas.ctx.drawImage($h.canvas("darkness").canvas.canvas, 0, 0, 4000, 4000, 0,0, 200, 200);
+    //fow.canvas.ctx.drawImage($h.canvas("darkness").canvas.canvas, camera.position.x, camera.position.y, camera.width, camera.height, 0,0, 1000, 600);
+    //if(++this.frames % 10 === 0){
+    //m.canvas.ctx.drawImage($h.canvas("small").canvas.canvas, 0, 0, 200, 200);
+    //}
     m.drawRect(camera.width, camera.height, camera.position.x, camera.position.y, "transparent", {width:2, color:"white"});
     m.drawRect({
       x:0,
@@ -176,6 +181,7 @@ exports.gamePlay = {
     $h.events.unlisten("cameraMoved", this.event);
   },
   enter: function(){
+    this.frames = 0;
     this.called = this.called || 0;
     var camera = $h.canvas("main").canvas.camera;
     var background = $h.canvas("background");
@@ -187,7 +193,7 @@ exports.gamePlay = {
     });
     $h.gamestate.canvasMouse.unpause();
     background.clear();
-    console.log(this.called++);
+    //console.log(this.called++);
     drawMap(background, map, camera);
   }
 };

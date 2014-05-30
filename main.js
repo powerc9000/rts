@@ -1141,7 +1141,6 @@ exports.gamePlay = {
     m.clear();
     if(this.camMoved){
       this.camMoved = false;
-      console.log("how often am I being called?", $h.gamestate.minimapClick);
       background.clear();
       drawMap(background, map, camera);
       //scroll = false;
@@ -1183,7 +1182,7 @@ exports.gamePlay = {
       this.grd.addColorStop(0, "white");
       this.grd.addColorStop(0.98, "transparent");
       //clipArc(fow.canvas.ctx, dude.position.x,dude.position.y, dude.viewDistance, 40);
-      //fow.drawCircle(dude.position.x,dude.position.y,100, "white");
+      fow.drawCircle(dude.position.x,dude.position.y,100, "white");
       
       
       
@@ -1198,7 +1197,7 @@ exports.gamePlay = {
     
     fow.canvas.ctx.restore();
     //blur($h.canvas("FoW").canvas.canvas, 0,0, 1000,1000, 200, 1);
-    //fow.canvas.ctx.drawImage($h.canvas("darkness").canvas.canvas, camera.position.x, camera.position.y, camera.width, camera.height, 0,0, 1000, 600);
+    fow.canvas.ctx.drawImage($h.canvas("darkness").canvas.canvas, camera.position.x, camera.position.y, camera.width, camera.height, 0,0, 1000, 600);
     m.canvas.ctx.drawImage($h.canvas("darkness").canvas.canvas, 0, 0, 4000, 4000, 0,0, 200, 200);
     m.drawRect(camera.width, camera.height, camera.position.x, camera.position.y, "transparent", {width:2, color:"white"});
     m.drawRect({

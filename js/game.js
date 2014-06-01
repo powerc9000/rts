@@ -26,7 +26,6 @@ var minimapClick;
 var percent;
 var scrollDirection;
 var map = require("./maps").one;
-console.log(map);
 var gameState = {
   init: function(){
     this.state = gamestates.loadState;
@@ -50,36 +49,38 @@ var styles = {position:"absolute"};
 minimap = $h.canvas.create("minimap",200,200, minicam, styles);
 minimapBG = $h.canvas.create("minibg", 200,200, minicam, styles);
 $h.canvas.create("small", 200,200, minicam,styles);
-$h.canvas.create("master", 1000, 600, camera, styles).append("#container").canvas.canvas.style["z-index"] = -1;
-$h.canvas.create("background", 1000, 600, camera, styles).append("#container").canvas.canvas.style["z-index"] = 1;
-$h.canvas.create("FoW", 1000, 600, camera, styles).append("#container").canvas.canvas.style["z-index"] = 3;
-$h.canvas.create("darkness", map.width, map.height, camera, styles).append("#container").canvas.canvas.style["z-index"] = 4;
-$h.canvas.create("foreground", 1000, 600, camera, styles).append("#container").canvas.canvas.style["z-index"] = 7;
-$h.canvas.create("main", 1000, 600, camera, styles).append("#container").canvas.canvas.style["z-index"] = 2;
-minimap.append("#container").canvas.canvas.style["z-index"] = 6;
-minimapBG.append("#container").canvas.canvas.style["z-index"] = 5;
+$h.canvas.create("master", 1000, 600, camera, styles).append("#container").canvas.canvas.style["z-index"] = 1;
+$h.canvas.create("background", 1000, 600, camera, styles)//.append("#container")//.canvas.canvas.style["z-index"] = 1;
+$h.canvas.create("FoW", 1000, 600, camera, styles)//.append("#container").canvas.canvas.style["z-index"] = 3;
+$h.canvas.create("miniFoW", 200, 200, minicam, styles)//.append("#container").canvas.canvas.style["z-index"] = -1;
+//$h.canvas.create("darkness", map.width, map.height, camera, styles).append("#container").canvas.canvas.style["z-index"] = 4;
+$h.canvas.create("foreground", 1000, 600, camera, styles)//.append("#container").canvas.canvas.style["z-index"] = 8;
+$h.canvas.create("main", 1000, 600, camera, styles)//.append("#container").canvas.canvas.style["z-index"] = 2;
+//minimap.append("#container").canvas.canvas.style["z-index"] = 6;
+//minimapBG.append("#container").canvas.canvas.style["z-index"] = -1;
 minimap.canvas.canvas.style.top = 400;
 minimap.canvas.canvas.style.left = 800;
 minimapBG.canvas.canvas.style.top = 400;
 minimapBG.canvas.canvas.style.left = 800;
-$h.canvas("darkness").drawRect({
-  x:0,
-  y:0,
-  width:map.width,
-  height:map.height,
-  camera:false,
-  color:"black"
-});
-console.log($h.canvas("darkness"));
-$h.canvas("darkness").canvas.ctx.globalCompositeOperation = "destination-out";
+$h.canvas("miniFoW").canvas.canvas.style.top = 400;
+$h.canvas("miniFoW").canvas.canvas.style.left = 800;
+// $h.canvas("darkness").drawRect({
+//   x:0,
+//   y:0,
+//   width:map.width,
+//   height:map.height,
+//   camera:false,
+//   color:"black"
+// });
+//$h.canvas("darkness").canvas.ctx.globalCompositeOperation = "destination-out";
 background = $h.canvas("background");
 //background.append("#container");
 inputBox = document.body.appendChild(inputBox);
 checkbox = document.body.appendChild(checkbox);
 checkbox.type = "checkbox";
 
-canvasMouse = mouse($h.canvas("foreground").canvas.canvas, camera);
-minimapMouse = mouse($h.canvas("minimap").canvas.canvas, minicam);
+canvasMouse = mouse($h.canvas("master").canvas.canvas, camera);
+//minimapMouse = mouse($h.canvas("minimap").canvas.canvas, minicam);
 
 
 //$h.canvas("master").append("body");
@@ -180,7 +181,6 @@ canvasMouse.listen("leftMouseDown", function(coords, button){
     //We want to bounds check on the top left and bottom right
     cpy = c.sub($h.Vector(camera.width/2, camera.height/2));
     if(cpy.x + camera.width > map.width){
-      console.log("hey");
       c.x = map.width - (camera.width/2);
     }else if(cpy.x < 0){
       c.x = (camera.width/2);
@@ -254,12 +254,13 @@ document.addEventListener("webkitpointerlockchange", function(e){
 
 
 $h.update(function(delta){
+ 
   gameState.update(delta);
 });
 minicam.zoomOut(20);
 minicam.moveTo($h.Vector(2000,2000));
 drawMap($h.canvas("minibg"), map, minicam);
-$h.render(function(){
+$h.render(function(delta){
   var master = $h.canvas("master");
   var c = $h.canvas("main");
   var m = $h.canvas("minimap");
@@ -269,11 +270,11 @@ $h.render(function(){
 	gameState.render();
   zero = camera.project($h.Vector(0,0));
   master.clear();
-  // master.drawImage(background.canvas.canvas, zero.x, zero.y);
-  // master.drawImage(c.canvas.canvas, zero.x, zero.y);
-  // master.drawImage($h.canvas("FoW").canvas.canvas, zero.x, zero.y);
-  // master.drawImage(m.canvas.canvas, zero.x + 800, zero.y + 400);
-  // master.drawImage(fg.canvas.canvas, zero.x, zero.y);
+  master.drawImage(background.canvas.canvas, zero.x, zero.y);
+  master.drawImage(c.canvas.canvas, zero.x, zero.y);
+  master.drawImage($h.canvas("FoW").canvas.canvas, zero.x, zero.y);
+  master.drawImage(m.canvas.canvas, zero.x + 800, zero.y + 400);
+  master.drawImage(fg.canvas.canvas, zero.x, zero.y);
   
 
 });

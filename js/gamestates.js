@@ -40,11 +40,14 @@ exports.loadState = {
 exports.gamePlay = {
   update: function(entity, delta){
     var camera = $h.canvas("main").canvas.camera;
+    if(this.ignoreDelta){
+      delta = 0;
+      this.ignoreDelta = false;
+    }
     $h.gamestate.units.forEach(function(dude){
       dude.update(delta);
     });
     if($h.paused){
-      console.log("pauses are killing me?");
       entity.changeState(exports.pausedState);
     }
     var scrollx  = 10;
@@ -87,6 +90,7 @@ exports.gamePlay = {
     var m = $h.canvas("minimap");
     var mos = camera.project($h.gamestate.canvasMouse.mousePos());
     var zero;
+    var miniFow = $h.canvas("miniFoW");
     var background = $h.canvas("background");
     var fg = $h.canvas("foreground");
     var fow = $h.canvas("FoW");
@@ -96,8 +100,8 @@ exports.gamePlay = {
       this.camMoved = false;
       background.clear();
       drawMap(background, map, camera);
-      $h.canvas("darkness").canvas.canvas.style.top = -camera.position.y;
-      $h.canvas("darkness").canvas.canvas.style.left = -camera.position.x;
+      //$h.canvas("darkness").canvas.canvas.style.top = -camera.position.y;
+      //$h.canvas("darkness").canvas.canvas.style.left = -camera.position.x;
       //scroll = false;
     }
     m.drawRect({
@@ -120,9 +124,20 @@ exports.gamePlay = {
       camera:false,
       color:"rgba(0,0,0,.6)"
     });
+    miniFow.clear();
+    miniFow.drawRect({
+      x:0,
+      y:0,
+      width:miniFow.width,
+      height:miniFow.height,
+      camera:false,
+      color:"rgba(0,0,0,.6)"
+    });
     
     fow.canvas.ctx.save();
+    miniFow.canvas.ctx.save();
     fow.canvas.ctx.globalCompositeOperation = "destination-out";
+    miniFow.canvas.ctx.globalCompositeOperation = "destination-out";
     $h.gamestate.units.forEach(function(dude){
       dude.render(c);
       dude.minimapRender(m);
@@ -136,20 +151,16 @@ exports.gamePlay = {
       });
       this.grd.addColorStop(0, "white");
       this.grd.addColorStop(0.98, "transparent");
-      //clipArc(fow.canvas.ctx, dude.position.x,dude.position.y, dude.viewDistance, 40);
       fow.drawCircle(dude.position.x,dude.position.y,100, grd);
       
-      
-      
-      $h.canvas("darkness").drawCircle({
+      $h.canvas("miniFoW").drawCircle({
         radius:100, 
         x:dude.position.x,
         y:dude.position.y, 
         color:"red",
-        camera:false
       });
     });
-    
+    miniFow.canvas.ctx.restore();
     fow.canvas.ctx.restore();
     //$h.canvas("small").canvas.ctx.drawImage($h.canvas("darkness").canvas.canvas, 0, 0, 4000/4, 4000/4);
     //blur($h.canvas("FoW").canvas.canvas, 0,0, 1000,1000, 200, 1);
@@ -157,6 +168,7 @@ exports.gamePlay = {
     //if(++this.frames % 10 === 0){
     //m.canvas.ctx.drawImage($h.canvas("small").canvas.canvas, 0, 0, 200, 200);
     //}
+    m.drawImage(miniFow.canvas.canvas, 0,0);
     m.drawRect(camera.width, camera.height, camera.position.x, camera.position.y, "transparent", {width:2, color:"white"});
     m.drawRect({
       x:0,
@@ -181,6 +193,7 @@ exports.gamePlay = {
     $h.events.unlisten("cameraMoved", this.event);
   },
   enter: function(){
+    this.ignoreDelta = true;
     this.frames = 0;
     this.called = this.called || 0;
     var camera = $h.canvas("main").canvas.camera;

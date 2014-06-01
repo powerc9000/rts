@@ -497,27 +497,33 @@
           var then = Date.now();
           var ltime;
           window.requestAnimationFrame(aniframe);
-          function aniframe(){
-            //We want the time inbetween frames not the time in between frames + time it took to do a frame
+          setTimeout(updateFrame, 1000/this.fps);
+          function updateFrame(){
             ltime = then;
             if(that.imagesLoaded){
               then = Date.now();
-              that.onTick(ltime);
-
+              that.updateTick(ltime);
             }
+            setTimeout(updateFrame, 1000/that.fps);
+          }
+          function aniframe(){
+            //We want the time inbetween frames not the time in between frames + time it took to do a frame
+            that.renderTick();
             window.requestAnimationFrame(aniframe);
           }
 
         },
-        onTick: function(then){
+        updateTick: function(then){
           var now = Date.now(),
           modifier = now - then;
           this.trueFps = 1/(modifier/1000);
           this._ticks+=1;
           this._update(modifier, this._ticks);
-          this._render(modifier, this._ticks);
           this.gameTime += modifier;
 
+        },
+        renderTick: function(then){
+          this._render();
         },
         exception: function(message){
           this.message = message;

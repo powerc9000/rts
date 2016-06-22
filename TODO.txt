@@ -1,0 +1,11 @@
+done
+
+- Do it tile based
+
+To do
+- textures
+- Fixed map size
+- Camera
+- Figure out what we want
+  The location of a tile to be
+  eg left right or center
